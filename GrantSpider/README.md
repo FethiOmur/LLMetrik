@@ -1,31 +1,30 @@
-# 🚀 AMIF Grant Assistant - LangGraph Multi-Agent Chatbot
+# 🚀 AMIF Grant Assistant
 
-Bu proje, AMIF (Asylum, Migration and Integration Fund) hibe belgeleri için geliştirilmiş akıllı bir soru-cevap sistemidir. LangGraph tabanlı multi-agent mimarisi kullanarak PDF belgeleri analiz eder ve kullanıcı sorularına kaynak belirtme ile yanıt verir.
+AMIF (Asylum, Migration and Integration Fund) hibe belgeleri için akıllı soru-cevap sistemi. LangGraph tabanlı multi-agent chatbot ile PDF belgelerinden semantik arama ve kaynak atıfları.
 
 ## ✨ Özellikler
 
-- **PDF İngestion**: 49 AMIF belgesi (5,037 sayfa, 13M+ karakter) işlendi
-- **Multi-Agent Mimarisi**: LangGraph ile orchestrated ajanlar
-- **Gelişmiş Vektör Arama**: ChromaDB ile semantik arama
-- **Kaynak Belirtme**: Her yanıt için PDF dosya adı ve sayfa numarası
-- **Çok Dil Desteği**: Türkçe/İngilizce otomatik dil algılama
-- **Çoklu Arayüz**: CLI, Advanced CLI, Streamlit web arayüzü
+- 📄 **PDF Belge İşleme**: 49 AMIF hibe belgesi yüklü (7,400+ metin parçası)
+- 🔍 **Semantik Arama**: OpenAI embeddings ile gelişmiş arama
+- 🤖 **AI Asistan**: GPT-4 ile akıllı yanıtlar
+- 📚 **Kaynak Atıfları**: Her yanıt için PDF kaynağı ve sayfa numarası
+- 🎨 **Çoklu Arayüz**: CLI ve Streamlit web arayüzü
+- 🌐 **Çok Dilli**: Türkçe ve İngilizce destek
 
-## 🔧 Teknik Stack
+## 🏗️ Sistem Mimarisi
 
-- **LangGraph**: Agent orchestration
-- **OpenAI GPT-4**: Response generation
-- **text-embedding-3-small**: Vector embeddings
-- **ChromaDB**: Vector database
-- **Streamlit**: Web interface
-- **PyMuPDF**: PDF processing
-
-## 📊 Performans
-
-- 17,293 text chunk işlendi
-- ~2-3 saniye yanıt süresi
-- Sorgu başına 8 kaynak ile sayfa belirtme
-- Otomatik dil algılama ve yanıt eşleştirme
+```
+GrantSpider/
+├── config/          # API anahtarları ve model konfigürasyonları
+├── ingestion/       # PDF yükleme, metin işleme, vektör veritabanı
+├── agents/          # LangGraph ajanları (retriever, qa_agent, supervisor)
+├── memory/          # Konuşma hafızası yönetimi
+├── chains/          # LangChain zincirleri
+├── graph/           # Multi-agent graph tanımları
+├── interfaces/      # Kullanıcı arayüzleri
+├── utils/           # Yardımcı fonksiyonlar
+└── data/            # PDF dosyaları ve vektör veritabanı
+```
 
 ## 🚀 Kurulum
 
@@ -34,106 +33,122 @@ Bu proje, AMIF (Asylum, Migration and Integration Fund) hibe belgeleri için gel
 pip install -r requirements.txt
 ```
 
-### 2. OpenAI API Key
-`config/models.py` dosyasında API key'inizi ayarlayın:
-```python
-OPENAI_API_KEY = "your-api-key-here"
+### 2. Environment Variables Oluştur
+Proje kök dizininde `.env` dosyası oluşturun:
+
+```bash
+# .env dosyası
+OPENAI_API_KEY=your_openai_api_key_here
+OPENAI_BASE_URL=https://api.openai.com/v1
+LLM_MODEL=gpt-4
+EMBEDDING_MODEL=text-embedding-3-small
+VECTOR_DB_PATH=data/db
+CHUNK_SIZE=1000
+CHUNK_OVERLAP=200
+DEBUG=False
 ```
+
+**⚠️ Önemli**: `.env` dosyası git'e commit edilmez, bu güvenlik içindir.
 
 ### 3. PDF Belgelerini Yükle
-PDF dosyalarınızı `data/raw/` klasörüne koyun.
-
-### 4. Vektör Veritabanını Oluştur
-```bash
-python3 -c "
-from ingestion.vector_store import VectorStore
-from ingestion.pdf_loader import PDFLoader
-from ingestion.text_processor import TextProcessor
-
-vs = VectorStore()
-loader = PDFLoader()
-processor = TextProcessor()
-
-docs = loader.load_all_pdfs('data/raw')
-processed = processor.process_documents(docs)
-vs.add_documents(processed)
-"
-```
+PDF dosyalarınızı `data/raw/` klasörüne koyun ve sistemi çalıştırın.
 
 ## 💻 Kullanım
 
-### Başlatma Menüsü
-```bash
-python3 start.py
-```
-
-### Direkt Arayüzler
-
-#### 1. Advanced CLI
+### CLI Arayüzü (Gelişmiş)
 ```bash
 python3 advanced_cli.py
 ```
 
-#### 2. Streamlit Web App
+**Özellikler:**
+- 🎨 Renkli terminal arayüzü
+- 📚 Kaynak bilgileri gösterimi
+- ⏰ Zaman damgaları
+- 💡 Yardım menüsü
+- 🧹 Ekran temizleme
+
+### Streamlit Web Arayüzü
 ```bash
 streamlit run streamlit_app.py
 ```
 
-#### 3. Simple CLI
+**Özellikler:**
+- 🌐 Modern web arayüzü
+- 📊 Sistem durumu gösterimi
+- 💡 Örnek sorular
+- 📚 Detaylı kaynak bilgileri
+- 🔍 Ham arama sonuçları
+
+### Basit CLI
 ```bash
 python3 simple_cli.py
 ```
 
-## 📁 Proje Yapısı
+## 📋 Örnek Sorular
 
+- "AMIF hibe başvurusu nasıl yapılır?"
+- "What are the eligibility criteria for AMIF grants?"
+- "Proje bütçesi nasıl hazırlanmalı?"
+- "Subcontracting rules nelerdir?"
+- "Application deadline ne zaman?"
+- "Hangi ülkeler başvurabilir?"
+
+## 🔧 Teknik Detaylar
+
+### Kullanılan Teknolojiler
+- **LangChain**: Belge işleme ve AI zinciri
+- **LangGraph**: Multi-agent workflow
+- **OpenAI GPT-4**: Dil modeli
+- **OpenAI Embeddings**: Metin vektörleştirme
+- **ChromaDB**: Vektör veritabanı
+- **PyMuPDF**: PDF işleme
+- **Streamlit**: Web arayüzü
+
+### Veri İşleme Pipeline
+1. **PDF Yükleme**: PyMuPDF ile PDF'leri metin olarak çıkarma
+2. **Metin Bölme**: RecursiveCharacterTextSplitter ile chunking
+3. **Vektörleştirme**: OpenAI embeddings ile vektör oluşturma
+4. **Depolama**: ChromaDB'de kalıcı saklama
+5. **Arama**: Semantik benzerlik araması
+6. **Yanıt**: GPT-4 ile bağlamsal yanıt oluşturma
+
+### Performans
+- 📊 **7,413 belge** vektör veritabanında
+- ⚡ **~2-3 saniye** yanıt süresi
+- 🎯 **Yüksek doğruluk** kaynak atıfları ile
+- 💾 **Düşük bellek** kullanımı
+
+## 📚 Kaynak Atıfları
+
+Sistem her yanıt için şu bilgileri sağlar:
+- 📄 **PDF Dosya Adı**: Hangi belgeden geldiği
+- 📍 **Sayfa Numarası**: Bilginin bulunduğu sayfa
+- 🔍 **İlgililik Skoru**: Semantic search sonucu
+
+## 🛠️ Geliştirme
+
+### Test Etme
+```bash
+# Sistem testi
+python3 test_full_system.py
+
+# Vector store testi
+python3 test_vector_store.py
 ```
-GrantSpider/
-├── agents/          # LangGraph ajanları
-├── chains/          # LangChain zincir mantığı
-├── config/          # Model ve ayar konfigürasyonları
-├── data/            # PDF dosyaları ve vektör DB
-├── graph/           # LangGraph graf tanımları
-├── ingestion/       # PDF yükleme ve vektör işleme
-├── interfaces/      # Kullanıcı arayüzleri
-├── memory/          # Konuşma hafızası
-└── utils/           # Yardımcı fonksiyonlar
-```
 
-## 📋 Workspace Kuralları
+### Yeni PDF Ekleme
+1. PDF'leri `data/raw/` klasörüne koyun
+2. `load_pdfs_to_vector_store.py` scriptini çalıştırın
 
-Proje modüler yapıyı korumak için şu kurallara uyar:
+## 📈 Gelecek Özellikler
 
-1. **PDF işleme** → yalnızca `ingestion/` klasöründe
-2. **Agent mantığı** → yalnızca `agents/` klasöründe  
-3. **Graf tanımları** → yalnızca `graph/` klasöründe
-4. **Kullanıcı arayüzü** → yalnızca `interfaces/` klasöründe
+- 🔄 **Multi-Agent Workflow**: LangGraph ile gelişmiş ajan sistemi
+- 💾 **Konuşma Hafızası**: Önceki sorular için bağlam
+- 🌍 **Çok Dilli Destek**: Daha fazla dil desteği
+- 📊 **Analytics Dashboard**: Kullanım istatistikleri
+- 🔐 **Kullanıcı Yönetimi**: Kimlik doğrulama sistemi
 
-## 🔍 Örnek Kullanım
-
-```
-🤔 Sorunuz: What are the personnel cost calculation requirements?
-
-💡 YANIT:
-Personnel costs are calculated using a daily rate formula:
-Daily rate = annual personnel costs / 215
-
-📚 KAYNAKLAR:
-[1] AMIF-2025-TF2-AG-INTE-01-WOMEN_separator_aga_en.pdf (Sayfa: 54)
-[2] AMIF-2025-TF2-AG-INTE-02-HEALTH_separator_aga_en.pdf (Sayfa: 54)
-```
-
-## 📈 Gelişmiş Özellikler
-
-- **Kaynak Doğrulama**: Her yanıt gerçek PDF sayfa referansları ile
-- **Dil Adaptasyonu**: Soru dilinde otomatik yanıt
-- **Metadata Zenginleştirme**: Dosya boyutu, sayfa sayısı, chunk bilgileri
-- **Performans Optimizasyonu**: Paralel işleme ve cache mekanizması
-
-## 📝 Lisans
-
-MIT License
-
-## 👥 Katkıda Bulun
+## 🤝 Katkıda Bulunma
 
 1. Fork edin
 2. Feature branch oluşturun (`git checkout -b feature/amazing-feature`)
@@ -141,6 +156,17 @@ MIT License
 4. Push edin (`git push origin feature/amazing-feature`)
 5. Pull Request açın
 
+## 📄 Lisans
+
+Bu proje MIT lisansı altında lisanslanmıştır.
+
+## 🙏 Teşekkürler
+
+- OpenAI GPT-4 ve Embeddings API
+- LangChain ve LangGraph ekibi
+- ChromaDB geliştiricileri
+- Streamlit topluluğu
+
 ---
 
-**Not**: Bu sistem EU grant belgelerinin karmaşık yapısını analiz etmek için optimize edilmiştir. Farklı belge türleri için ingestion pipeline'ı ayarlanabilir. 
+**🚀 AMIF Grant Assistant** - Powered by AI, Built with ❤️ 

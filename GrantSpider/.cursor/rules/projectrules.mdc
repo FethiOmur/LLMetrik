@@ -1,0 +1,22 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+Bu projedeki tüm kodları geliştirirken aşağıdaki kurallara kesinlikle uy:
+
+1.  **Klasör Yapısı ve Modülerlik:**
+    -   PDF yükleme, metin bölme (chunking) ve vektör veritabanına ekleme ile ilgili tüm mantık, yalnızca `ingestion/` klasörü içindeki dosyalarda yer almalıdır.
+    -   LangGraph ajanlarının (retriever, qa_agent vb.) tanımları ve mantığı `agents/` klasöründe bulunmalıdır.
+    -   Ana LangGraph grafiğinin (state, node, edge tanımları) oluşturulması `graph/` klasöründe yapılmalıdır.
+    -   Kullanıcı arayüzü kodu (`CLI` veya `Streamlit`) yalnızca `interfaces/` klasöründe yer almalıdır.
+    -   Farklı modüllerdeki kodları birbirine karıştırma. Her modül kendi sorumluluğuna odaklanmalıdır.
+
+2.  **Kod Kalitesi ve Dokümantasyon:**
+    -   Oluşturduğun her Python fonksiyonu ve sınıfı için açıklayıcı docstring'ler (belgelendirme notları) ekle. Docstring'ler fonksiyonun ne yaptığını, parametrelerini ve ne döndürdüğünü açıklamalıdır.
+    -   Kodun okunabilirliğini artırmak için anlamlı değişken ve fonksiyon isimleri kullan.
+
+3.  **Kütüphane Kullanımı:**
+    -   PDF dosyalarını işlemek için `PyMuPDF` veya `PyPDF2` gibi standart kütüphaneleri tercih et.
+    -   Vektör veritabanı olarak, aksi belirtilmedikçe `ChromaDB` veya `FAISS` kullan.
+    -   Tüm Python bağımlılıklarını geliştirme sürecinde `requirements.txt` dosyasına ekle.

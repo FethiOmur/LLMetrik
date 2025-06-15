@@ -1,0 +1,3 @@
+"""
+Config modülü - Yapılandırma ayarları
+""" 

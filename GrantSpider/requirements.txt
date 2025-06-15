@@ -1,13 +1,33 @@
-langchain==0.3.11
-langchain-community==0.3.8
-langchain-core==0.3.22
-langchain-openai==0.2.14
-langgraph==0.2.60
-openai==1.57.2
-chromadb==0.5.23
-streamlit==1.41.0
-PyMuPDF==1.25.1
-python-dotenv==1.0.1
-tiktoken==0.8.0
-numpy==1.26.4
-pandas==2.2.3 
+# LangGraph ve LangChain bağımlılıkları
+langchain>=0.3.0
+langgraph>=0.2.0
+langchain-openai>=0.2.0
+langchain-anthropic>=0.2.0
+langchain-community>=0.3.0
+langchain-core>=0.3.0
+langchain-chroma>=0.1.0
+langchain-text-splitters>=0.3.0
+
+# PDF işleme
+PyMuPDF>=1.24.0
+pypdf>=4.0.0
+pypdf2>=3.0.0
+
+# Vektör veritabanları
+chromadb>=0.5.0
+faiss-cpu>=1.8.0
+
+# Embedding ve metin işleme
+sentence-transformers>=3.0.0
+tiktoken>=0.7.0
+openai>=1.0.0
+
+# Arayüz bileşenleri
+streamlit>=1.39.0
+click>=8.1.0
+
+# Diğer yardımcı kütüphaneler
+python-dotenv>=1.0.0
+pydantic>=2.9.0
+numpy>=1.24.0
+pandas>=2.0.0 
