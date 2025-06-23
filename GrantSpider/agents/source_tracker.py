@@ -27,7 +27,13 @@ class SourceTrackerAgent(BaseAgent):
         retrieved_documents = state.get("retrieved_documents", [])
         qa_response = state.get("qa_response", "")
         
+        # Her durumda source_tracking_performed = True ayarla
+        state["source_tracking_performed"] = True
+        
         if not retrieved_documents:
+            # Boş belgeler listesi durumunda default değerler
+            state["sources"] = []
+            state["cited_response"] = qa_response
             return state
         
         # Kaynak bilgilerini çıkar
@@ -39,7 +45,6 @@ class SourceTrackerAgent(BaseAgent):
         # Durumu güncelle
         state["sources"] = sources
         state["cited_response"] = cited_response
-        state["source_tracking_performed"] = True
         
         return state
     
@@ -58,45 +63,48 @@ class SourceTrackerAgent(BaseAgent):
         
         for doc in documents:
             metadata = doc.get("metadata", {})
-            filename = metadata.get("filename", "")
             source_path = metadata.get("source", "")
             
+            # Clean source name - path'den dosya adını çıkar
+            clean_source = source_path.replace('data/raw/', '').replace('.pdf', '')
+            if not clean_source:
+                clean_source = metadata.get("filename", "Bilinmeyen")
+            
+            # Sayfa bilgisini al
+            page_number = metadata.get("page_number", metadata.get("page", ""))
+            page_display = f"Sayfa {page_number}" if page_number else "Sayfa bilinmiyor"
+            
             # Aynı kaynağı tekrar ekleme
-            source_key = (filename, source_path)
+            source_key = (clean_source, page_number)
             if source_key in seen_sources:
                 continue
             
             seen_sources.add(source_key)
             
             sources.append({
-                "filename": filename,
+                "clean_source": clean_source,
+                "page": page_display,
                 "source_path": source_path,
                 "chunk_index": metadata.get("chunk_index", 0),
-                "similarity_score": doc.get("similarity_score", 0.0)
+                "similarity_score": doc.get("similarity_score", 0.0),
+                "content": doc.get("content", "")[:100] + "..."
             })
         
         return sources
     
     def _add_citations(self, response: str, sources: List[Dict[str, Any]]) -> str:
         """
-        Yanıta kaynak atıfları ekler
+        Orijinal yanıtı döndürür - Kaynaklar ayrı listede gösteriliyor
         
         Args:
             response: Orijinal yanıt
             sources: Kaynak listesi
             
         Returns:
-            Kaynak atıflı yanıt
+            Orijinal yanıt (kaynaklar artık yanıtın sonuna eklenmiyor)
         """
-        if not sources:
-            return response
-        
-        citation_text = "\n\n**Kaynaklar:**\n"
-        for i, source in enumerate(sources, 1):
-            filename = source.get("filename", "Bilinmeyen")
-            citation_text += f"{i}. {filename}\n"
-        
-        return response + citation_text
+        # Kaynaklar artık yanıtın sonuna eklenmiyor, sadece ayrı listede gösteriliyor
+        return response
     
     def get_source_summary(self, sources: List[Dict[str, Any]]) -> str:
         """
@@ -111,5 +119,5 @@ class SourceTrackerAgent(BaseAgent):
         if not sources:
             return "Hiç kaynak bulunamadı."
         
-        unique_files = set(source.get("filename", "") for source in sources)
+        unique_files = set(source.get("clean_source", "") for source in sources)
         return f"Toplam {len(sources)} chunk, {len(unique_files)} farklı belgeden kullanıldı." 

@@ -1,135 +1,72 @@
 """
 AMIF Grant Assistant - Web Arayüzü
-Flask tabanlı kullanıcı arayüzü
+LangGraph Multi-Agent System kullanıyor
 """
 
 import sys
 import os
 from pathlib import Path
+import uuid
 
 # Ana dizini Python path'ine ekle
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from flask import Flask, render_template, request, jsonify
 from config.settings import settings
-from ingestion.vector_store import get_vector_store, search_documents, get_collection_info
+from ingestion.vector_store import get_vector_store, get_collection_info
+from graph.multi_agent_graph import MultiAgentGraph
 
 app = Flask(__name__, 
-           template_folder='../templates',
-           static_folder='../static')
+           template_folder='templates',
+           static_folder='static')
 
 # Global değişkenler
 db_connected = False
 db_info = {}
+multi_agent_graph = None
 
-def check_database_connection():
-    """Veritabanı bağlantısını kontrol et"""
-    global db_connected, db_info
+def initialize_multi_agent_system():
+    """Multi-Agent Graph sistemini başlat"""
+    global multi_agent_graph, db_connected, db_info
     try:
-        # Vector store'u test et
+        print("🚀 AMIF Grant Assistant başlatılıyor...")
+        
+        # Vector store'u başlat
+        print("🔧 Vector store başlatılıyor...")
         vector_store = get_vector_store()
+        print("✅ Vector store hazır")
+        
+        # Collection bilgilerini al
         db_info = get_collection_info()
         db_connected = True
         print(f"✅ Veritabanı bağlantısı başarılı: {db_info['document_count']} doküman")
+        
+        # Multi-Agent Graph'ı başlat
+        print("🤖 Multi-Agent Graph başlatılıyor...")
+        multi_agent_graph = MultiAgentGraph(vector_store)
+        print("✅ Multi-Agent Graph hazır")
+        
         return True
     except Exception as e:
-        print(f"❌ Veritabanı bağlantı hatası: {e}")
+        print(f"❌ Multi-Agent sistem başlatma hatası: {e}")
         db_connected = False
-        db_info = {}
         return False
 
-def search_in_database(query: str, max_results: int = 5):
-    """Veritabanında arama yap"""
-    try:
-        if not db_connected:
-            return None
-        
-        results = search_documents(query, max_results)
-        
-        if not results:
-            return []
-        
-        formatted_results = []
-        for i, result in enumerate(results, 1):
-            content = result.page_content[:500] + "..." if len(result.page_content) > 500 else result.page_content
-            source = result.metadata.get('source', 'Bilinmeyen kaynak')
-            
-            formatted_results.append({
-                'rank': i,
-                'content': content,
-                'source': source,
-                'metadata': result.metadata
-            })
-        
-        return formatted_results
-        
-    except Exception as e:
-        print(f"❌ Arama hatası: {e}")
-        return None
-
 def get_demo_response(query: str):
-    """Demo yanıtı döndür"""
-    demo_responses = {
-        "default": """
+    """Demo yanıtı döndür (fallback)"""
+    return {
+        'qa_response': f"""
         🤖 **AMIF Grant Assistant (Demo Modu)**
         
-        Merhaba! Ben AMIF hibelerle ilgili sorularınızı yanıtlayabilirim.
+        Üzgünüm, şu anda multi-agent sistemine bağlanamıyorum.
+        Sorgunuz: "{query}"
         
-        **Örnek sorular:**
-        - AMIF hibeleri için başvuru kriterleri nelerdir?
-        - Entegrasyon projeleri için hangi destekler var?
-        - Başvuru süreçleri nasıl işliyor?
-        
-        **Not:** Şu anda demo modunda çalışıyorum. Gerçek veritabanı bağlantısı için sistem yöneticisine başvurun.
-        """
+        **Demo modunda çalışıyorum.** Gerçek sistem için lütfen daha sonra tekrar deneyin.
+        """,
+        'sources': [],
+        'cited_response': 'Demo modunda kaynak bilgisi mevcut değil.',
+        'detected_language': 'tr'
     }
-    
-    # Anahtar kelime bazlı basit yanıtlar
-    query_lower = query.lower()
-    
-    if any(word in query_lower for word in ['başvuru', 'application', 'apply']):
-        return """
-        📋 **AMIF Başvuru Süreci**
-        
-        AMIF hibeleri için başvuru yapmak üzere:
-        
-        1. **Uygunluk Kontrolü**: Projenizin AMIF kriterlerine uygun olduğundan emin olun
-        2. **Belge Hazırlığı**: Gerekli tüm belgeleri hazırlayın
-        3. **Online Başvuru**: Resmi portal üzerinden başvurunuzu yapın
-        4. **Değerlendirme**: Başvurunuz uzmanlar tarafından değerlendirilir
-        
-        *Demo modunda detaylı bilgi sınırlıdır.*
-        """
-    
-    elif any(word in query_lower for word in ['entegrasyon', 'integration', 'integrate']):
-        return """
-        🤝 **AMIF Entegrasyon Destekleri**
-        
-        AMIF çerçevesinde entegrasyon projeleri için:
-        
-        - **Sosyal Entegrasyon**: Toplumsal uyum projeleri
-        - **Ekonomik Entegrasyon**: İstihdam ve girişimcilik destekleri  
-        - **Eğitim Entegrasyonu**: Dil öğrenimi ve mesleki eğitim
-        - **Kültürel Entegrasyon**: Kültürlerarası diyalog projeleri
-        
-        *Detaylı bilgi için gerçek veritabanı bağlantısı gereklidir.*
-        """
-    
-    elif any(word in query_lower for word in ['bütçe', 'budget', 'funding', 'para']):
-        return """
-        💰 **AMIF Finansman Bilgileri**
-        
-        AMIF hibeleri kapsamında:
-        
-        - **Proje Bütçeleri**: Değişken tutarlarda destek
-        - **Eş Finansman**: Genellikle %25 eş finansman gerekli
-        - **Ödeme Planı**: Avans ve ara ödemeler mevcut
-        - **Raporlama**: Düzenli mali raporlama zorunlu
-        
-        *Güncel tutarlar için resmi kaynaklara başvurun.*
-        """
-    
-    return demo_responses["default"]
 
 @app.route('/')
 def index():
@@ -140,10 +77,10 @@ def index():
 
 @app.route('/search', methods=['POST'])
 def search():
-    """Arama endpoint'i"""
+    """Multi-Agent Graph kullanarak arama"""
     try:
         data = request.get_json()
-        query = data.get('query', '').strip()
+        query = data.get('query', data.get('message', '')).strip()
         
         if not query:
             return jsonify({
@@ -151,78 +88,278 @@ def search():
                 'error': 'Arama sorgusu boş olamaz'
             })
         
-        # Veritabanında arama yap
-        if db_connected:
-            results = search_in_database(query)
+        print(f"🔍 Multi-Agent Graph ile sorgu işleniyor: '{query}'")
+        
+        # Multi-Agent Graph sistemini kullan
+        if multi_agent_graph and db_connected:
+            # Session ID - çerezden al veya yeni oluştur
+            session_id = request.cookies.get('session_id')
+            if not session_id:
+                session_id = str(uuid.uuid4())
             
-            if results is None:
-                # Hata durumunda demo moda geç
-                response = get_demo_response(query)
-                return jsonify({
-                    'success': True,
-                    'mode': 'demo',
-                    'response': response,
-                    'query': query
-                })
-            elif len(results) == 0:
-                return jsonify({
-                    'success': True,
-                    'mode': 'database',
-                    'response': f"'{query}' ile ilgili sonuç bulunamadı. Lütfen farklı anahtar kelimeler deneyin.",
-                    'results': [],
-                    'query': query
-                })
+            print(f"🎯 Session ID: {session_id}")
+            print("🚀 Multi-Agent workflow başlatılıyor...")
+            
+            # Multi-Agent Graph'ı çalıştır
+            result = multi_agent_graph.run(query, session_id)
+            
+            print(f"✅ Multi-Agent workflow tamamlandı")
+            print(f"📄 QA Yanıt uzunluğu: {len(result.get('qa_response', ''))} karakter")
+            print(f"📋 Kaynak sayısı: {len(result.get('sources', []))}")
+            
+            # Kaynakları formatla
+            sources = result.get('sources', [])
+            retrieved_docs = result.get('retrieved_documents', [])
+            source_details = []
+            
+            # Eğer sources boşsa, retrieved_documents'ten kaynak oluştur
+            if not sources and retrieved_docs:
+                for i, doc in enumerate(retrieved_docs[:8], 1):
+                    metadata = doc.get('metadata', {})
+                    
+                    # Kaynak adını çıkar
+                    source_path = metadata.get('source', '')
+                    clean_source = source_path.replace('data/raw/', '').replace('.pdf', '')
+                    if not clean_source:
+                        clean_source = metadata.get('filename', 'Bilinmeyen')
+                    
+                    # Sayfa bilgisini çıkar
+                    page_number = metadata.get('page_number', metadata.get('page', ''))
+                    page_display = f"Sayfa {page_number}" if page_number else 'Sayfa bilinmiyor'
+                    
+                    source_details.append({
+                        'rank': i,
+                        'source': clean_source,
+                        'page': page_display,
+                        'content': doc.get('content', '')[:100] + '...'
+                    })
             else:
-                # Sonuçları formatla
-                formatted_response = f"**'{query}' için {len(results)} sonuç bulundu:**\n\n"
-                
-                for result in results:
-                    formatted_response += f"**{result['rank']}. Sonuç:**\n"
-                    formatted_response += f"{result['content']}\n"
-                    formatted_response += f"*Kaynak: {result['source']}*\n\n"
-                
-                return jsonify({
-                    'success': True,
-                    'mode': 'database',
-                    'response': formatted_response,
-                    'results': results,
-                    'query': query
-                })
+                # Normal sources işleme - SourceTracker'dan gelen sources
+                for i, source in enumerate(sources, 1):
+                    if isinstance(source, dict):
+                        source_details.append({
+                            'rank': i,
+                            'source': source.get('clean_source', 'Bilinmeyen'),
+                            'page': source.get('page', 'Sayfa bilinmiyor'),
+                            'content': source.get('content', '...')
+                        })
+            
+            response = jsonify({
+                'success': True,
+                'mode': 'multi_agent',
+                'response': result.get('cited_response', result.get('qa_response', '')),
+                'sources': source_details,
+                'source_details': source_details,
+                'session_id': session_id,
+                'metadata': {
+                    'detected_language': result.get('detected_language', 'tr'),
+                    'agent_workflow': 'supervisor -> document_retriever -> qa_agent -> source_tracker'
+                }
+            })
+            
+            # Session cookie ayarla
+            response.set_cookie('session_id', session_id, max_age=86400)  # 24 saat
+            return response
+        
         else:
-            # Demo modu
-            response = get_demo_response(query)
+            # Fallback: Demo modu
+            print("⚠️ Multi-Agent sistem kullanılamıyor, demo moda geçiliyor...")
+            demo_result = get_demo_response(query)
+            
             return jsonify({
                 'success': True,
                 'mode': 'demo',
-                'response': response,
-                'query': query
+                'response': demo_result['qa_response'],
+                'source_details': [],
+                'metadata': {
+                    'detected_language': demo_result['detected_language'],
+                    'note': 'Demo modunda çalışıyor - Multi-Agent sistem bağlantısı kurulamadı'
+                }
             })
-            
+        
     except Exception as e:
+        print(f"❌ Arama hatası: {e}")
         return jsonify({
             'success': False,
-            'error': f'Arama sırasında hata oluştu: {str(e)}'
+            'error': f'Arama sırasında hata oluştu: {str(e)}',
+            'mode': 'error'
         })
 
 @app.route('/status')
 def status():
     """Sistem durumu"""
+    try:
+        agent_status = "Aktif" if multi_agent_graph else "İnaktif"
+        memory_status = "Aktif" if (multi_agent_graph and multi_agent_graph.graph.checkpointer) else "İnaktif"
+        session_id = request.cookies.get('session_id', 'Yok')
+        
+        return jsonify({
+            'database_connected': db_connected,
+            'multi_agent_system': agent_status,
+            'memory_system': memory_status,
+            'current_session': session_id[:8] + "..." if len(session_id) > 8 else session_id,
+            'document_count': db_info.get('document_count', 0),
+            'collection_name': db_info.get('collection_name', 'N/A'),
+            'system_mode': 'multi_agent' if multi_agent_graph else 'demo'
+        })
+    except Exception as e:
+        return jsonify({
+            'error': str(e),
+            'database_connected': False,
+            'multi_agent_system': 'Hata',
+            'memory_system': 'Hata',
+            'system_mode': 'error'
+        })
+
+@app.route('/health')
+def health():
+    """Sağlık kontrol endpoint'i"""
     return jsonify({
-        'database_connected': db_connected,
-        'database_info': db_info,
-        'openai_configured': bool(settings.OPENAI_API_KEY)
+        'status': 'healthy',
+        'multi_agent_ready': multi_agent_graph is not None,
+        'database_ready': db_connected
     })
 
+@app.route('/api/history')
+def get_conversation_history():
+    """Conversation history döndür"""
+    try:
+        session_id = request.cookies.get('session_id')
+        if not session_id:
+            return jsonify({
+                'success': True,
+                'history': [],
+                'message': 'Yeni oturum - henüz geçmiş yok'
+            })
+        
+        # LangGraph'tan conversation history al
+        if multi_agent_graph and multi_agent_graph.graph.checkpointer:
+            try:
+                config = {"configurable": {"thread_id": session_id}}
+                
+                # Graph'ın state history'sini al
+                checkpoint = multi_agent_graph.graph.checkpointer.get(config)
+                
+                if checkpoint and hasattr(checkpoint, 'channel_values'):
+                    # Geçmiş conversation'ları çıkar
+                    history = []
+                    state = checkpoint.channel_values
+                    
+                    # Mevcut query varsa history'e ekle
+                    if state.get('query'):
+                        history.append({
+                            'type': 'user',
+                            'message': state.get('query'),
+                            'timestamp': checkpoint.ts if hasattr(checkpoint, 'ts') else None
+                        })
+                    
+                    if state.get('qa_response'):
+                        history.append({
+                            'type': 'assistant', 
+                            'message': state.get('qa_response'),
+                            'sources': state.get('sources', []),
+                            'timestamp': checkpoint.ts if hasattr(checkpoint, 'ts') else None
+                        })
+                    
+                    return jsonify({
+                        'success': True,
+                        'session_id': session_id,
+                        'history': history
+                    })
+                else:
+                    return jsonify({
+                        'success': True,
+                        'session_id': session_id,
+                        'history': [],
+                        'message': 'Bu oturum için henüz geçmiş yok'
+                    })
+                    
+            except Exception as e:
+                print(f"⚠️ History alma hatası: {e}")
+                return jsonify({
+                    'success': True,
+                    'session_id': session_id,
+                    'history': [],
+                    'message': 'Geçmiş bilgiler alınamadı'
+                })
+        
+        return jsonify({
+            'success': False,
+            'error': 'Memory sistemi mevcut değil'
+        })
+        
+    except Exception as e:
+        print(f"❌ History endpoint hatası: {e}")
+        return jsonify({
+            'success': False,
+            'error': f'Geçmiş alınırken hata: {str(e)}'
+        })
+
+@app.route('/api/clear-history', methods=['POST'])
+def clear_conversation_history():
+    """Conversation history temizle"""
+    try:
+        session_id = request.cookies.get('session_id')
+        if not session_id:
+            return jsonify({
+                'success': False,
+                'error': 'Session bulunamadı'
+            })
+        
+        # Yeni session ID oluştur
+        new_session_id = str(uuid.uuid4())
+        
+        response = jsonify({
+            'success': True,
+            'message': 'Conversation history temizlendi',
+            'new_session_id': new_session_id
+        })
+        
+        # Yeni session cookie ayarla
+        response.set_cookie('session_id', new_session_id, max_age=86400)
+        return response
+        
+    except Exception as e:
+        print(f"❌ History temizleme hatası: {e}")
+        return jsonify({
+            'success': False,
+            'error': f'Geçmiş temizlenirken hata: {str(e)}'
+        })
+
+@app.route('/graph')
+def graph_visualization():
+    """Multi-Agent Graph görselleştirmesi"""
+    try:
+        if multi_agent_graph:
+            # Graph image varsa döndür
+            graph_image = multi_agent_graph.get_graph_image()
+            if graph_image:
+                from flask import Response
+                return Response(graph_image, mimetype='image/png')
+        
+        return jsonify({
+            'error': 'Graph görselleştirmesi mevcut değil'
+        })
+    except Exception as e:
+        return jsonify({
+            'error': f'Graph görselleştirme hatası: {str(e)}'
+        })
+
 if __name__ == '__main__':
-    print("🚀 AMIF Grant Assistant başlatılıyor...")
+    # Sistem başlatma
+    print("🌐 AMIF Grant Assistant Web Uygulaması")
+    print("="*50)
     
-    # Veritabanı bağlantısını kontrol et
-    check_database_connection()
+    # Multi-Agent sistemi başlat
+    if initialize_multi_agent_system():
+        print("🌐 Web arayüzü: http://localhost:3000")
+        print("📊 Veritabanı durumu: Bağlı")
+        print("🤖 Multi-Agent Graph: Aktif")
+        print(f"📄 Toplam doküman: {db_info.get('document_count', 0)}")
+    else:
+        print("⚠️ Multi-Agent sistem başlatılamadı - Demo modunda çalışacak")
     
-    print(f"🌐 Web arayüzü: http://localhost:3000")
-    print(f"📊 Veritabanı durumu: {'Bağlı' if db_connected else 'Bağlı değil'}")
+    print("="*50)
     
-    if db_connected:
-        print(f"📄 Toplam doküman: {db_info.get('document_count', 'Bilinmiyor')}")
-    
+    # Flask uygulamasını başlat
     app.run(host='0.0.0.0', port=3000, debug=True) 

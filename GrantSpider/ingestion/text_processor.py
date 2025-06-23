@@ -1,91 +1,89 @@
 """
-Metin işleme ve chunking
+Metin işleme ve chunking işlemleri
 """
 
 from typing import List
-from langchain_text_splitters import RecursiveCharacterTextSplitter
-from langchain_core.documents import Document
+from langchain.text_splitter import RecursiveCharacterTextSplitter
+from langchain.schema import Document
+
 from config.settings import settings
+from ingestion.vector_store import add_documents_to_vector_store
 
 class TextProcessor:
-    """Metin işleme ve bölme işlemleri"""
+    """Metin işleme ve chunking sınıfı"""
     
-    def __init__(self, chunk_size: int = None, chunk_overlap: int = None):
-        self.chunk_size = chunk_size or settings.CHUNK_SIZE
-        self.chunk_overlap = chunk_overlap or settings.CHUNK_OVERLAP
-        
-        # RecursiveCharacterTextSplitter oluştur
+    def __init__(self):
+        """Text splitter'ı başlat"""
         self.text_splitter = RecursiveCharacterTextSplitter(
-            chunk_size=self.chunk_size,
-            chunk_overlap=self.chunk_overlap,
+            chunk_size=settings.CHUNK_SIZE,
+            chunk_overlap=settings.CHUNK_OVERLAP,
             length_function=len,
-            separators=[
-                "\n\n",  # Paragraf ayırıcıları
-                "\n",    # Satır ayırıcıları
-                " ",     # Kelime ayırıcıları
-                ""       # Karakter ayırıcıları
-            ],
-            keep_separator=True
+            separators=["\n\n", "\n", " ", ""]
         )
-    
-    def process_document(self, document: Document) -> List[Document]:
-        """
-        Tek bir belgeyi işler ve parçalara böler
-        
-        Args:
-            document: İşlenecek LangChain Document
-            
-        Returns:
-            İşlenmiş Document parçalarının listesi
-        """
-        # Metni temizle
-        cleaned_text = self._clean_text(document.page_content)
-        
-        # Metni parçalara böl
-        chunks = self.text_splitter.split_text(cleaned_text)
-        
-        # Her parça için yeni Document oluştur
-        processed_documents = []
-        for i, chunk in enumerate(chunks):
-            # Orijinal metadata'yı kopyala ve chunk bilgilerini ekle
-            chunk_metadata = document.metadata.copy()
-            chunk_metadata.update({
-                "chunk_index": i,
-                "total_chunks": len(chunks),
-                "chunk_size": len(chunk)
-            })
-            
-            chunk_document = Document(
-                page_content=chunk,
-                metadata=chunk_metadata
-            )
-            processed_documents.append(chunk_document)
-        
-        return processed_documents
     
     def process_documents(self, documents: List[Document]) -> List[Document]:
         """
-        Birden fazla belgeyi işler
+        Belgeleri işle ve chunk'lara böl
         
         Args:
-            documents: İşlenecek Document listesi
+            documents: İşlenecek belgeler
             
         Returns:
-            Tüm işlenmiş Document parçalarının listesi
+            İşlenmiş ve chunk'lanmış belgeler
         """
+        if not documents:
+            return []
+        
         print(f"📝 {len(documents)} belge işleniyor...")
         
         all_chunks = []
-        for i, document in enumerate(documents):
-            print(f"📄 İşleniyor: {document.metadata.get('filename', f'Belge {i+1}')}")
+        
+        for doc in documents:
+            # Belgeyi chunk'lara böl
+            chunks = self.text_splitter.split_documents([doc])
             
-            chunks = self.process_document(document)
+            # Her chunk için metadata güncelle
+            for i, chunk in enumerate(chunks):
+                chunk.metadata.update({
+                    'chunk_index': i,
+                    'total_chunks': len(chunks),
+                    'chunk_size': len(chunk.page_content)
+                })
+            
             all_chunks.extend(chunks)
             
+            print(f"📄 İşleniyor: {doc.metadata.get('source', 'unknown')}")
             print(f"✂️  {len(chunks)} parçaya bölündü")
         
         print(f"🎉 Toplam {len(all_chunks)} metin parçası oluşturuldu")
         return all_chunks
+    
+    def process_and_store_documents(self, documents: List[Document]) -> bool:
+        """
+        Belgeleri işle ve vector store'a ekle
+        
+        Args:
+            documents: İşlenecek belgeler
+            
+        Returns:
+            bool: Başarılı ise True
+        """
+        try:
+            # Belgeleri işle
+            processed_docs = self.process_documents(documents)
+            
+            if not processed_docs:
+                print("⚠️  İşlenecek belge bulunamadı")
+                return False
+            
+            # Vector store'a ekle
+            success = add_documents_to_vector_store(processed_docs)
+            
+            return success
+            
+        except Exception as e:
+            print(f"❌ Belge işleme ve saklama hatası: {e}")
+            return False
     
     def _clean_text(self, text: str) -> str:
         """

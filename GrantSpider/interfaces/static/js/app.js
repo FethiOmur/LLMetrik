@@ -22,7 +22,7 @@ const refreshStatusBtn = document.getElementById('refreshStatusBtn');
 
 // ===== INITIALIZATION =====
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('🚀 AMIF Grant Assistant Web Interface başlatılıyor...');
+    console.log('AMIF Grant Assistant Web Interface başlatılıyor...');
     
     setupEventListeners();
     checkSystemStatus();
@@ -68,7 +68,7 @@ async function handleSendMessage() {
     }
     
     if (!systemStatus.system_ready) {
-        showNotification('Sistem henüz hazır değil. Lütfen bekleyin...', 'warning');
+        alert('System is not ready yet. Please wait...');
         return;
     }
     
@@ -77,11 +77,17 @@ async function handleSendMessage() {
     messageInput.value = '';
     setLoading(true);
     
+    // Memory event - mesaj gönderildi
+    onMessageSent();
+    
+    // Typing indicator göster
+    showTypingIndicator();
+    
     // Hoşgeldin mesajını gizle
     hideWelcomeMessage();
     
     try {
-        const response = await fetch('/api/query', {
+        const response = await fetch('/search', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -91,18 +97,29 @@ async function handleSendMessage() {
         
         const data = await response.json();
         
+        // Typing indicator'ı gizle
+        hideTypingIndicator();
+        
         if (data.success) {
-            addMessageToChat('assistant', data.response, data.sources, data.timestamp);
+            addMessageToChat('assistant', data.response, data.source_details || data.sources, data.timestamp);
+            
+            // Memory event - yanıt alındı
+            onMessageReceived();
+            
             checkSystemStatus();
         } else {
-            addMessageToChat('assistant', 'Hata: ' + data.error, [], null);
-            showNotification('Sorgu işlenirken hata oluştu.', 'error');
+            addMessageToChat('assistant', 'Error: ' + data.error, [], null);
+            alert('An error occurred while processing the query.');
         }
         
     } catch (error) {
-        console.error('API Hatası:', error);
-        addMessageToChat('assistant', 'Bağlantı hatası. Lütfen tekrar deneyin.', [], null);
-        showNotification('Sunucuya bağlanılamadı.', 'error');
+        console.error('API Error:', error);
+        
+        // Typing indicator'ı gizle (hata durumunda)
+        hideTypingIndicator();
+        
+        addMessageToChat('assistant', 'Connection error. Please try again.', [], null);
+        alert('Cannot connect to server.');
     } finally {
         setLoading(false);
     }
@@ -122,22 +139,44 @@ function addMessageToChat(type, content, sources, timestamp) {
     
     messageContent.appendChild(messageText);
     
-    // Sources ekle (sadece assistant mesajları için)
-    if (type === 'assistant' && sources && sources.length > 0) {
-        const sourcesDiv = document.createElement('div');
-        sourcesDiv.className = 'message-sources';
-        
-        const sourcesTitle = document.createElement('h4');
-        sourcesTitle.textContent = 'Kaynaklar (' + sources.length + ')';
+            // Sources ekle (sadece assistant mesajları için)
+        if (type === 'assistant' && sources && sources.length > 0) {
+            const sourcesDiv = document.createElement('div');
+            sourcesDiv.className = 'message-sources';
+            
+            const sourcesTitle = document.createElement('h4');
+            sourcesTitle.textContent = 'Sources';
         sourcesDiv.appendChild(sourcesTitle);
         
+        const sourcesGrid = document.createElement('div');
+        sourcesGrid.className = 'sources-grid';
+        
         sources.forEach((source, index) => {
-            const sourceItem = document.createElement('div');
-            sourceItem.className = 'source-item';
-            sourceItem.textContent = (index + 1) + '. ' + source;
-            sourcesDiv.appendChild(sourceItem);
+            const sourceCard = document.createElement('div');
+            sourceCard.className = 'source-card';
+            
+            // Minimal kaynak gösterimi
+            let sourceName = '';
+            let pageInfo = '';
+            
+            if (typeof source === 'object' && source.source) {
+                sourceName = source.source;
+                pageInfo = source.page || '';
+            } else {
+                sourceName = typeof source === 'string' ? source : source.source || source;
+                pageInfo = source.page || '';
+            }
+            
+            sourceCard.innerHTML = `
+                <span class="source-number">${index + 1}.</span>
+                <span class="source-title">${sourceName}</span>
+                <span class="source-page">${pageInfo}</span>
+            `;
+            
+            sourcesGrid.appendChild(sourceCard);
         });
         
+        sourcesDiv.appendChild(sourcesGrid);
         messageContent.appendChild(sourcesDiv);
     }
     
@@ -146,7 +185,7 @@ function addMessageToChat(type, content, sources, timestamp) {
         const timestampDiv = document.createElement('div');
         timestampDiv.className = 'message-timestamp';
         const date = new Date(timestamp);
-        timestampDiv.textContent = date.toLocaleTimeString('tr-TR');
+        timestampDiv.textContent = date.toLocaleTimeString('en-US');
         messageContent.appendChild(timestampDiv);
     }
     
@@ -164,47 +203,103 @@ function hideWelcomeMessage() {
     }
 }
 
+// ===== TYPING INDICATOR =====
+function showTypingIndicator() {
+    // Mevcut typing indicator'ı kaldır
+    hideTypingIndicator();
+    
+    const typingDiv = document.createElement('div');
+    typingDiv.className = 'message message-assistant typing-message';
+    typingDiv.id = 'typingIndicator';
+    
+    const messageContent = document.createElement('div');
+    messageContent.className = 'message-content';
+    
+    const typingIndicator = document.createElement('div');
+    typingIndicator.className = 'typing-indicator';
+    
+    typingIndicator.innerHTML = `
+        <span class="typing-text">AMIF Grant Assistant yazıyor</span>
+        <div class="typing-dots">
+            <div class="typing-dot"></div>
+            <div class="typing-dot"></div>
+            <div class="typing-dot"></div>
+        </div>
+    `;
+    
+    messageContent.appendChild(typingIndicator);
+    typingDiv.appendChild(messageContent);
+    chatMessages.appendChild(typingDiv);
+    
+    // Animasyon için class ekle
+    setTimeout(() => {
+        typingIndicator.classList.add('show');
+    }, 50);
+    
+    // Scroll to bottom
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+}
+
+function hideTypingIndicator() {
+    const typingIndicator = document.getElementById('typingIndicator');
+    if (typingIndicator) {
+        // Fade out animasyonu
+        const indicator = typingIndicator.querySelector('.typing-indicator');
+        if (indicator) {
+            indicator.style.opacity = '0';
+            indicator.style.transform = 'translateY(-10px)';
+        }
+        
+        // Kısa bir delay sonra kaldır
+        setTimeout(() => {
+            typingIndicator.remove();
+        }, 200);
+    }
+}
+
 // ===== SYSTEM STATUS =====
 async function checkSystemStatus() {
     try {
-        updateStatusIndicator('loading', 'Durum kontrol ediliyor...');
+        updateStatusIndicator('loading', 'Checking status...');
         
-        const response = await fetch('/api/status');
+        const response = await fetch('/status');
         const data = await response.json();
         
-        if (data.success) {
-            systemStatus = data.status;
-            updateSystemStatusUI();
-            
-            if (systemStatus.system_ready) {
-                updateStatusIndicator('ready', 'Sistem Hazır');
-            } else {
-                updateStatusIndicator('error', 'Sistem Hazır Değil');
-            }
+        // Flask endpoint'inden gelen veriyi JavaScript formatına çevir
+        systemStatus = {
+            system_ready: data.database_connected,
+            vector_db_ready: data.database_connected,
+            document_count: data.database_info?.document_count || 0,
+            chat_history_count: 0
+        };
+        
+        updateSystemStatusUI();
+        
+        if (systemStatus.system_ready) {
+            updateStatusIndicator('ready', 'System Ready');
         } else {
-            updateStatusIndicator('error', 'Durum Alınamadı');
-            showNotification('Sistem durumu kontrol edilemedi.', 'error');
+            updateStatusIndicator('error', 'System Not Ready');
         }
         
     } catch (error) {
-        console.error('Status kontrol hatası:', error);
-        updateStatusIndicator('error', 'Bağlantı Hatası');
-        showNotification('Sunucuya bağlanılamadı.', 'error');
+        console.error('Status check error:', error);
+        updateStatusIndicator('error', 'Connection Error');
+        alert('Cannot connect to server.');
     }
 }
 
 function updateSystemStatusUI() {
     const statusItems = systemStatusEl.querySelectorAll('.status-item');
     
-    // Sistem durumu
+    // System status
     updateStatusItem(statusItems[0], 
-        systemStatus.system_ready ? 'Hazır' : 'Hazır Değil',
+        systemStatus.system_ready ? 'Ready' : 'Not Ready',
         systemStatus.system_ready ? 'ready' : 'error'
     );
     
-    // Veritabanı durumu
+    // Database status
     updateStatusItem(statusItems[1],
-        systemStatus.vector_db_ready ? 'Bağlı' : 'Bağlı Değil',
+        systemStatus.vector_db_ready ? 'Connected' : 'Disconnected',
         systemStatus.vector_db_ready ? 'ready' : 'error'
     );
     
@@ -256,21 +351,24 @@ async function loadChatHistory() {
             data.history.forEach(entry => {
                 addMessageToChat('user', entry.query);
                 addMessageToChat('assistant', entry.response, entry.sources, entry.timestamp);
+                conversationMessageCount += 2; // Her entry için user + assistant
             });
+            
+            updateMemorySessionDisplay();
         }
         
     } catch (error) {
-        console.error('Geçmiş yükleme hatası:', error);
+        console.error('History loading error:', error);
     }
 }
 
 async function clearChatHistory() {
-    if (!confirm('Tüm sohbet geçmişini silmek istediğinize emin misiniz?')) {
+    if (!confirm('Are you sure you want to clear all chat history?')) {
         return;
     }
     
     try {
-        const response = await fetch('/api/clear_history', {
+        const response = await fetch('/api/clear-history', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -282,12 +380,12 @@ async function clearChatHistory() {
         if (data.success) {
             location.reload();
         } else {
-            showNotification('Geçmiş temizlenirken hata oluştu.', 'error');
+            showNotification('Error occurred while clearing history.', 'error');
         }
         
     } catch (error) {
-        console.error('Geçmiş temizleme hatası:', error);
-        showNotification('Sunucuya bağlanılamadı.', 'error');
+        console.error('History clearing error:', error);
+        showNotification('Cannot connect to server.', 'error');
     }
 }
 
@@ -296,13 +394,13 @@ function setLoading(loading) {
     isLoading = loading;
     
     if (loading) {
-        loadingOverlay.classList.add('active');
         sendBtn.disabled = true;
         messageInput.disabled = true;
+        sendBtn.textContent = 'Sending...';
     } else {
-        loadingOverlay.classList.remove('active');
         sendBtn.disabled = false;
         messageInput.disabled = false;
+        sendBtn.textContent = 'Send';
         messageInput.focus();
     }
 }
@@ -310,6 +408,110 @@ function setLoading(loading) {
 function showNotification(message, type) {
     console.log('[' + type.toUpperCase() + '] ' + message);
 }
+
+// ===== MEMORY PANEL =====
+let currentSessionId = null;
+let conversationMessageCount = 0;
+
+function initializeMemoryPanel() {
+    // Memory panel başlat
+    updateMemoryPanel();
+    
+    // Session ID'yi cookie'den al
+    currentSessionId = getCookie('session_id');
+    if (!currentSessionId) {
+        // Yeni session oluştur
+        currentSessionId = 'session-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
+        setCookie('session_id', currentSessionId, 1); // 1 gün
+    }
+    
+    updateMemorySessionDisplay();
+}
+
+function updateMemoryPanel() {
+    const memoryIndicator = document.getElementById('memoryIndicator');
+    const memoryActivity = document.getElementById('memoryActivity');
+    
+    if (memoryIndicator) {
+        const memoryDot = memoryIndicator.querySelector('.memory-dot');
+        const memoryText = memoryIndicator.querySelector('.memory-text');
+        
+        memoryDot.classList.add('active');
+        memoryText.textContent = 'Memory Active';
+    }
+    
+    if (memoryActivity) {
+        const activityText = memoryActivity.querySelector('.activity-text');
+        activityText.textContent = 'Ready';
+        memoryActivity.className = 'memory-activity';
+    }
+}
+
+function updateMemorySessionDisplay() {
+    const sessionIdEl = document.getElementById('currentSessionId');
+    const conversationCountEl = document.getElementById('conversationCount');
+    
+    if (sessionIdEl && currentSessionId) {
+        // Session ID'yi kısalt
+        const shortSessionId = currentSessionId.substring(0, 8) + '...';
+        sessionIdEl.textContent = shortSessionId;
+        sessionIdEl.title = currentSessionId; // Tam session ID'yi tooltip olarak göster
+    }
+    
+    if (conversationCountEl) {
+        conversationCountEl.textContent = `${conversationMessageCount} messages`;
+    }
+}
+
+function showMemoryActivity(state, message) {
+    const memoryActivity = document.getElementById('memoryActivity');
+    const activityText = memoryActivity?.querySelector('.activity-text');
+    
+    if (!memoryActivity || !activityText) return;
+    
+    // Activity state'ini değiştir
+    memoryActivity.className = `memory-activity ${state}`;
+    activityText.textContent = message;
+    
+    // Belirli bir süre sonra normal haline dön
+    setTimeout(() => {
+        memoryActivity.className = 'memory-activity';
+        activityText.textContent = 'Ready';
+    }, 3000);
+}
+
+function onMessageSent() {
+    conversationMessageCount++;
+    updateMemorySessionDisplay();
+    showMemoryActivity('thinking', 'Processing question...');
+}
+
+function onMessageReceived() {
+    conversationMessageCount++;
+    updateMemorySessionDisplay();
+    showMemoryActivity('saving', 'Updating memory...');
+}
+
+// Cookie yardımcı fonksiyonları
+function setCookie(name, value, days) {
+    const expires = new Date();
+    expires.setTime(expires.getTime() + (days * 24 * 60 * 60 * 1000));
+    document.cookie = `${name}=${value}; expires=${expires.toUTCString()}; path=/`;
+}
+
+function getCookie(name) {
+    const nameEQ = name + "=";
+    const ca = document.cookie.split(';');
+    for (let i = 0; i < ca.length; i++) {
+        let c = ca[i];
+        while (c.charAt(0) === ' ') c = c.substring(1, c.length);
+        if (c.indexOf(nameEQ) === 0) return c.substring(nameEQ.length, c.length);
+    }
+    return null;
+}
+
+// Memory paneli başlat
+initializeMemoryPanel();
 
 // Auto-refresh status
 setInterval(checkSystemStatus, 30000);

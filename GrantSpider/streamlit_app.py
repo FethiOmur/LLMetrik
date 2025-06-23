@@ -13,7 +13,7 @@ from typing import List, Dict, Any
 project_root = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, project_root)
 
-from ingestion.vector_store import VectorStore
+from ingestion.vector_store import get_vector_store, get_collection_info, search_documents
 from agents.qa_agent import QAAgent
 
 # Sayfa konfigürasyonu
@@ -71,13 +71,13 @@ def initialize_system():
     """Sistemi başlatır ve cache'ler"""
     try:
         # Vector store'u başlat
-        vector_store = VectorStore(persist_directory="data/db")
+        vector_store = get_vector_store()
         
         # QA Agent'ı başlat
         qa_agent = QAAgent()
         
         # Collection bilgilerini al
-        info = vector_store.get_collection_info()
+        info = get_collection_info()
         document_count = info.get("document_count", 0)
         
         return vector_store, qa_agent, document_count
@@ -112,8 +112,9 @@ def format_sources(documents: List[Any]) -> str:
 def process_question(vector_store, qa_agent, question: str) -> Dict[str, Any]:
     """Soruyu işler ve yanıt döndürür"""
     try:
-        # Vector store'dan arama yap (dil algılaması ile)
-        documents, detected_language = vector_store.search_with_sources(question, k=8)
+        # Vector store'dan arama yap
+        documents = search_documents(question, k=8)
+        detected_language = "tr"  # Varsayılan Türkçe
         
         if not documents:
             return {

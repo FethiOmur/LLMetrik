@@ -41,7 +41,7 @@ class MultiAgentGraph:
         builder.add_edge("qa_agent", "supervisor")
         builder.add_edge("source_tracker", "supervisor")
         
-        # Memory checkpointer ekle
+        # Memory checkpointer ekle (basit in-memory)
         memory = MemorySaver()
         
         # Graf'ı derle
@@ -70,11 +70,12 @@ class MultiAgentGraph:
         result = self.graph.invoke(initial_state, config=config)
         
         return {
-            "query": result.query,
-            "qa_response": result.qa_response,
-            "cited_response": result.cited_response,
-            "sources": result.sources,
-            "retrieved_documents": result.retrieved_documents
+            "query": result.get("query", query),
+            "qa_response": result.get("qa_response", ""),
+            "cited_response": result.get("cited_response", ""),
+            "sources": result.get("sources", []),
+            "retrieved_documents": result.get("retrieved_documents", []),
+            "detected_language": result.get("detected_language", "tr")
         }
     
     def stream(self, query: str, session_id: str = "default"):

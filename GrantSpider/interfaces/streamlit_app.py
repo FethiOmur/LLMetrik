@@ -1,5 +1,5 @@
 """
-Streamlit web arayüzü
+Streamlit web arayüzü - Basit Siyah-Beyaz Tasarım
 """
 
 import streamlit as st
@@ -12,7 +12,7 @@ from memory.conversation_memory import ConversationMemory
 # Sayfa yapılandırması
 st.set_page_config(
     page_title="GrantSpider Chatbot",
-    page_icon="🕷️",
+    page_icon="▪",
     layout="wide"
 )
 
@@ -35,7 +35,7 @@ def initialize_session_state():
 
 def main():
     """Ana uygulama"""
-    st.title("🕷️ GrantSpider Chatbot")
+    st.title("GrantSpider Chatbot")
     st.subheader("Grant Belgeleriniz için AI Asistan")
     
     # Session state başlat
@@ -43,28 +43,28 @@ def main():
     
     # Sidebar
     with st.sidebar:
-        st.header("⚙️ Ayarlar")
+        st.header("Ayarlar")
         
         # Session bilgileri
         st.info(f"Session ID: {st.session_state.session_id[:8]}...")
         
         # Sohbeti temizle butonu
-        if st.button("🗑️ Sohbeti Temizle"):
+        if st.button("Sohbeti Temizle"):
             st.session_state.messages = []
             st.session_state.conversation_memory.clear_history()
             st.rerun()
         
         # Sistem durumu
-        st.header("📊 Sistem Durumu")
+        st.header("Sistem Durumu")
         try:
             multi_agent_graph = load_multi_agent_system()
-            st.success("✅ Sistem hazır")
+            st.success("Sistem hazır")
         except Exception as e:
-            st.error(f"❌ Sistem hatası: {e}")
+            st.error(f"Sistem hatası: {e}")
             return
     
     # Ana sohbet alanı
-    st.header("💬 Sohbet")
+    st.header("Sohbet")
     
     # Sohbet geçmişini göster
     for message in st.session_state.messages:
@@ -73,7 +73,7 @@ def main():
             
             # Kaynak bilgilerini göster
             if message["role"] == "assistant" and "sources" in message:
-                with st.expander("📚 Kaynaklar"):
+                with st.expander("Kaynaklar"):
                     for i, source in enumerate(message["sources"], 1):
                         st.write(f"{i}. {source.get('filename', 'Bilinmeyen')}")
     
@@ -89,7 +89,7 @@ def main():
         
         # Asistan yanıtını oluştur
         with st.chat_message("assistant"):
-            with st.spinner("🔍 Belgeler aranıyor ve yanıt oluşturuluyor..."):
+            with st.spinner("Belgeler aranıyor ve yanıt oluşturuluyor..."):
                 try:
                     # Çoklu ajan sistemini çalıştır
                     result = multi_agent_graph.run(prompt, st.session_state.session_id)
@@ -103,11 +103,11 @@ def main():
                     
                     # Kaynak bilgilerini göster
                     if sources:
-                        with st.expander("📚 Kaynaklar"):
+                        with st.expander("Kaynaklar"):
                             for i, source in enumerate(sources, 1):
                                 filename = source.get('filename', 'Bilinmeyen')
                                 similarity_score = source.get('similarity_score', 0.0)
-                                st.write(f"{i}. **{filename}** (Benzerlik: {similarity_score:.2f})")
+                                st.write(f"{i}. {filename} (Benzerlik: {similarity_score:.2f})")
                     
                     # Mesajı session state'e ekle
                     st.session_state.messages.append({
@@ -120,13 +120,13 @@ def main():
                     st.session_state.conversation_memory.add_assistant_message(response)
                     
                 except Exception as e:
-                    error_msg = f"❌ Hata oluştu: {e}"
+                    error_msg = f"Hata oluştu: {e}"
                     st.error(error_msg)
                     st.session_state.messages.append({"role": "assistant", "content": error_msg})
 
 def upload_documents_page():
     """Belge yükleme sayfası"""
-    st.title("📁 Belge Yükleme")
+    st.title("Belge Yükleme")
     st.subheader("PDF dosyalarınızı sisteme yükleyin")
     
     uploaded_files = st.file_uploader(
@@ -136,7 +136,7 @@ def upload_documents_page():
     )
     
     if uploaded_files:
-        if st.button("📤 Belgeleri Yükle"):
+        if st.button("Belgeleri Yükle"):
             try:
                 from ingestion.pdf_loader import PDFLoader
                 from ingestion.text_processor import TextProcessor
@@ -146,24 +146,24 @@ def upload_documents_page():
                     progress_bar.progress(25)
                     
                     # İlerleme göstergesi ile belgeler işle
-                    st.info("📂 PDF dosyaları işleniyor...")
+                    st.info("PDF dosyaları işleniyor...")
                     progress_bar.progress(50)
                     
-                    st.info("✂️ Metinler parçalara bölünüyor...")
+                    st.info("Metinler parçalara bölünüyor...")
                     progress_bar.progress(75)
                     
-                    st.info("🗃️ Vektör veritabanına ekleniyor...")
+                    st.info("Vektör veritabanına ekleniyor...")
                     progress_bar.progress(100)
                 
-                st.success("🎉 Belgeler başarıyla yüklendi!")
+                st.success("Belgeler başarıyla yüklendi!")
                 
             except Exception as e:
-                st.error(f"❌ Hata: {e}")
+                st.error(f"Hata: {e}")
 
 # Sayfa navigasyonu
 pages = {
-    "💬 Sohbet": main,
-    "📁 Belge Yükleme": upload_documents_page
+    "Sohbet": main,
+    "Belge Yükleme": upload_documents_page
 }
 
 # Sidebar navigasyon

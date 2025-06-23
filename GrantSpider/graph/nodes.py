@@ -58,7 +58,8 @@ def document_retriever_node(state: MultiAgentState) -> MultiAgentState:
     state_dict = {
         "query": state.query,
         "retrieved_documents": state.retrieved_documents,
-        "retrieval_performed": state.retrieval_performed
+        "retrieval_performed": state.retrieval_performed,
+        "detected_language": state.detected_language
     }
     
     updated_state = document_retriever_agent.execute(state_dict)
@@ -66,6 +67,7 @@ def document_retriever_node(state: MultiAgentState) -> MultiAgentState:
     # Durumu güncelle
     state.retrieved_documents = updated_state.get("retrieved_documents", [])
     state.retrieval_performed = updated_state.get("retrieval_performed", False)
+    state.detected_language = updated_state.get("detected_language", "tr")
     
     return state
 
@@ -83,7 +85,8 @@ def qa_agent_node(state: MultiAgentState) -> MultiAgentState:
         "query": state.query,
         "retrieved_documents": state.retrieved_documents,
         "qa_response": state.qa_response,
-        "qa_performed": state.qa_performed
+        "qa_performed": state.qa_performed,
+        "detected_language": state.detected_language
     }
     
     updated_state = qa_agent.execute(state_dict)

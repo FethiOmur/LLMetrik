@@ -5,7 +5,8 @@ Bu modül PDF dosyalarını yükleme, metin işleme ve vektör veritabanına kay
 işlemlerini gerçekleştirir.
 
 Kullanım örneği:
-    from ingestion import PDFLoader, TextProcessor, VectorStore
+    from ingestion import PDFLoader, TextProcessor
+    from ingestion.vector_store import get_vector_store, add_documents_to_vector_store
     
     # PDF'leri yükle
     loader = PDFLoader()
@@ -16,54 +17,51 @@ Kullanım örneği:
     chunks = processor.process_documents(documents)
     
     # Vektör veritabanına kaydet
-    vector_store = VectorStore()
-    vector_store.add_documents(chunks)
+    add_documents_to_vector_store(chunks)
 """
 
 from .pdf_loader import PDFLoader
 from .text_processor import TextProcessor
-from .vector_store import VectorStore
 
-__all__ = ["PDFLoader", "TextProcessor", "VectorStore"]
+__all__ = ["PDFLoader", "TextProcessor"]
 
-def create_ingestion_pipeline(data_dir: str = "data/raw", db_dir: str = "data/db"):
+def create_ingestion_pipeline(data_dir: str = "data/raw"):
     """
     Tam bir veri işleme pipeline'ı oluşturur
     
     Args:
         data_dir: PDF dosyalarının bulunduğu dizin
-        db_dir: Vektör veritabanının kaydedileceği dizin
         
     Returns:
-        (loader, processor, vector_store) tuple'ı
+        (loader, processor) tuple'ı
     """
     loader = PDFLoader(data_dir=data_dir)
     processor = TextProcessor()
-    vector_store = VectorStore(persist_directory=db_dir)
     
-    return loader, processor, vector_store
+    return loader, processor
 
-def run_full_ingestion(data_dir: str = "data/raw", db_dir: str = "data/db", reset_db: bool = False):
+def run_full_ingestion(data_dir: str = "data/raw", reset_db: bool = False):
     """
     Tam veri işleme sürecini çalıştırır
     
     Args:
         data_dir: PDF dosyalarının bulunduğu dizin
-        db_dir: Vektör veritabanının kaydedileceği dizin
         reset_db: Veritabanını sıfırla
         
     Returns:
         Başarılı ise True
     """
     try:
+        from .vector_store import reset_vector_store, add_documents_to_vector_store
+        
         print("🚀 Veri işleme pipeline'ı başlatılıyor...")
         
         # Pipeline bileşenlerini oluştur
-        loader, processor, vector_store = create_ingestion_pipeline(data_dir, db_dir)
+        loader, processor = create_ingestion_pipeline(data_dir)
         
         # Veritabanını sıfırla (istenirse)
         if reset_db:
-            vector_store.reset_database()
+            reset_vector_store()
         
         # PDF'leri yükle
         print("\n📂 1. PDF dosyaları yükleniyor...")
@@ -73,33 +71,15 @@ def run_full_ingestion(data_dir: str = "data/raw", db_dir: str = "data/db", rese
             print("❌ Yüklenecek PDF dosyası bulunamadı")
             return False
         
-        # Belge bilgilerini göster
-        doc_info = loader.get_document_info(documents)
-        print(f"📊 Yüklenen belgeler: {doc_info}")
+        print(f"📊 {len(documents)} belge yüklendi")
         
-        # Metinleri işle
-        print("\n✂️  2. Metinler işleniyor ve parçalanıyor...")
-        chunks = processor.process_documents(documents)
-        
-        if not chunks:
-            print("❌ İşlenecek metin parçası bulunamadı")
-            return False
-        
-        # Chunk istatistiklerini göster
-        chunk_stats = processor.get_chunk_statistics(chunks)
-        print(f"📊 Chunk istatistikleri: {chunk_stats}")
-        
-        # Vektör veritabanına kaydet
-        print("\n🗃️  3. Vektör veritabanına kaydediliyor...")
-        success = vector_store.add_documents(chunks)
+        # Metinleri işle ve vektör veritabanına kaydet
+        print("\n✂️  2. Metinler işleniyor ve vektör veritabanına kaydediliyor...")
+        success = processor.process_and_store_documents(documents)
         
         if not success:
-            print("❌ Vektör veritabanına kaydetme başarısız")
+            print("❌ Belge işleme ve kaydetme başarısız")
             return False
-        
-        # Veritabanı bilgilerini göster
-        db_info = vector_store.get_database_info()
-        print(f"📊 Veritabanı bilgileri: {db_info}")
         
         print("\n🎉 Veri işleme pipeline'ı başarıyla tamamlandı!")
         return True

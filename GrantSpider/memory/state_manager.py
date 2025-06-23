@@ -13,6 +13,9 @@ class MultiAgentState:
     # Kullanıcı sorgusu
     query: str = ""
     
+    # Algılanan dil
+    detected_language: str = "tr"
+    
     # Sohbet geçmişi
     messages: List[BaseMessage] = field(default_factory=list)
     
@@ -127,6 +130,7 @@ class StateManager:
         """
         return {
             "query": self.current_state.query,
+            "detected_language": self.current_state.detected_language,
             "messages": [msg.dict() if hasattr(msg, 'dict') else str(msg) for msg in self.current_state.messages],
             "retrieved_documents": self.current_state.retrieved_documents,
             "qa_response": self.current_state.qa_response,
