@@ -15,7 +15,7 @@ class SupervisorAgent(BaseAgent):
             description="Diğer ajanları koordine eder ve workflow'u yönetir"
         )
     
-    def execute(self, state: Dict[str, Any]) -> Command[Literal["document_retriever", "qa_agent", "source_tracker", "__end__"]]:
+    def execute(self, state: Dict[str, Any]) -> Command[Literal["document_retriever", "qa_agent", "cross_document", "source_tracker", "__end__"]]:
         """
         Workflow koordinasyonunu gerçekleştirir
         
@@ -28,12 +28,17 @@ class SupervisorAgent(BaseAgent):
         # Durum kontrolü
         retrieval_performed = state.get("retrieval_performed", False)
         qa_performed = state.get("qa_performed", False)
+        cross_document_performed = state.get("cross_document_performed", False)
         source_tracking_performed = state.get("source_tracking_performed", False)
         
         # Workflow adımları
         if not retrieval_performed:
             print("🎯 Supervisor: Belge arama ajanına yönlendiriliyor...")
             return Command(goto="document_retriever")
+        
+        elif not cross_document_performed:
+            print("🎯 Supervisor: Cross-document analiz ajanına yönlendiriliyor...")
+            return Command(goto="cross_document")
         
         elif not qa_performed:
             print("🎯 Supervisor: QA ajanına yönlendiriliyor...")

@@ -35,6 +35,10 @@ class MultiAgentState:
     retrieval_performed: bool = False
     qa_performed: bool = False
     source_tracking_performed: bool = False
+    cross_document_performed: bool = False
+    
+    # Cross-document analysis sonuçları
+    cross_document_analysis: Dict[str, Any] = field(default_factory=dict)
     
     # Session bilgileri
     session_id: Optional[str] = None
@@ -104,7 +108,8 @@ class StateManager:
         return (
             self.current_state.retrieval_performed and
             self.current_state.qa_performed and
-            self.current_state.source_tracking_performed
+            self.current_state.source_tracking_performed and
+            self.current_state.cross_document_performed
         )
     
     def get_progress_summary(self) -> Dict[str, bool]:
@@ -118,6 +123,7 @@ class StateManager:
             "retrieval_performed": self.current_state.retrieval_performed,
             "qa_performed": self.current_state.qa_performed,
             "source_tracking_performed": self.current_state.source_tracking_performed,
+            "cross_document_performed": self.current_state.cross_document_performed,
             "workflow_complete": self.is_workflow_complete()
         }
     
@@ -139,6 +145,8 @@ class StateManager:
             "retrieval_performed": self.current_state.retrieval_performed,
             "qa_performed": self.current_state.qa_performed,
             "source_tracking_performed": self.current_state.source_tracking_performed,
+            "cross_document_performed": self.current_state.cross_document_performed,
+            "cross_document_analysis": self.current_state.cross_document_analysis,
             "session_id": self.current_state.session_id,
             "metadata": self.current_state.metadata
         } 

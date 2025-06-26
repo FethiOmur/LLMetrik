@@ -9,6 +9,7 @@ from graph.nodes import (
     supervisor_node,
     document_retriever_node,
     qa_agent_node,
+    cross_document_node,
     source_tracker_node,
     initialize_agents
 )
@@ -32,12 +33,14 @@ class MultiAgentGraph:
         # Düğümleri ekle
         builder.add_node("supervisor", supervisor_node)
         builder.add_node("document_retriever", document_retriever_node)
+        builder.add_node("cross_document", cross_document_node)
         builder.add_node("qa_agent", qa_agent_node)
         builder.add_node("source_tracker", source_tracker_node)
         
         # Graf kenarlarını tanımla
         builder.add_edge(START, "supervisor")
         builder.add_edge("document_retriever", "supervisor")
+        builder.add_edge("cross_document", "supervisor")
         builder.add_edge("qa_agent", "supervisor")
         builder.add_edge("source_tracker", "supervisor")
         
@@ -75,6 +78,7 @@ class MultiAgentGraph:
             "cited_response": result.get("cited_response", ""),
             "sources": result.get("sources", []),
             "retrieved_documents": result.get("retrieved_documents", []),
+            "cross_document_analysis": result.get("cross_document_analysis", {}),
             "detected_language": result.get("detected_language", "tr")
         }
     

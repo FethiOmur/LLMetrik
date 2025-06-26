@@ -15,6 +15,7 @@ from flask import Flask, render_template, request, jsonify
 from config.settings import settings
 from ingestion.vector_store import get_vector_store, get_collection_info
 from graph.multi_agent_graph import MultiAgentGraph
+from utils.performance_monitor import performance_tracker, QueryTracker
 
 app = Flask(__name__, 
            template_folder='templates',
@@ -100,8 +101,17 @@ def search():
             print(f"🎯 Session ID: {session_id}")
             print("🚀 Multi-Agent workflow başlatılıyor...")
             
-            # Multi-Agent Graph'ı çalıştır
-            result = multi_agent_graph.run(query, session_id)
+            # Performance tracking ile Multi-Agent Graph'ı çalıştır
+            with QueryTracker(session_id, query) as query_tracker:
+                result = multi_agent_graph.run(query, session_id)
+                
+                # Document metrics kaydet
+                performance_tracker.record_document_metrics(
+                    session_id,
+                    documents_retrieved=len(result.get('retrieved_documents', [])),
+                    sources_generated=len(result.get('sources', [])),
+                    detected_language=result.get('detected_language', 'unknown')
+                )
             
             print(f"✅ Multi-Agent workflow tamamlandı")
             print(f"📄 QA Yanıt uzunluğu: {len(result.get('qa_response', ''))} karakter")
@@ -144,6 +154,17 @@ def search():
                             'content': source.get('content', '...')
                         })
             
+            # Cross-document analysis bilgilerini ekle
+            cross_doc_analysis = result.get('cross_document_analysis', {})
+            cross_doc_summary = {}
+            
+            if cross_doc_analysis:
+                cross_doc_summary = {
+                    'grants_analyzed': cross_doc_analysis.get('total_grants_analyzed', 0),
+                    'insights_found': cross_doc_analysis.get('cross_document_insights', 0),
+                    'comparison_type': cross_doc_analysis.get('comparison', {}).get('comparison_type', 'none')
+                }
+            
             response = jsonify({
                 'success': True,
                 'mode': 'multi_agent',
@@ -151,9 +172,10 @@ def search():
                 'sources': source_details,
                 'source_details': source_details,
                 'session_id': session_id,
+                'cross_document_analysis': cross_doc_summary,
                 'metadata': {
                     'detected_language': result.get('detected_language', 'tr'),
-                    'agent_workflow': 'supervisor -> document_retriever -> qa_agent -> source_tracker'
+                    'agent_workflow': 'supervisor -> document_retriever -> cross_document -> qa_agent -> source_tracker'
                 }
             })
             
@@ -219,6 +241,59 @@ def health():
         'multi_agent_ready': multi_agent_graph is not None,
         'database_ready': db_connected
     })
+
+@app.route('/api/performance/stats')
+def performance_stats():
+    """Performance metrics endpoint"""
+    try:
+        stats = performance_tracker.get_system_stats()
+        analytics = performance_tracker.get_query_analytics(hours=24)
+        
+        return jsonify({
+            'success': True,
+            'system_stats': stats,
+            'query_analytics': analytics,
+            'timestamp': performance_tracker.stats['system_start_time'].isoformat()
+        })
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': f'Performance stats alınamadı: {str(e)}'
+        })
+
+@app.route('/api/performance/dashboard')
+def performance_dashboard():
+    """Performance dashboard data"""
+    try:
+        stats = performance_tracker.get_system_stats()
+        analytics_1h = performance_tracker.get_query_analytics(hours=1)
+        analytics_24h = performance_tracker.get_query_analytics(hours=24)
+        
+        return jsonify({
+            'success': True,
+            'dashboard': {
+                'current_stats': {
+                    'uptime_hours': round(stats['uptime_seconds'] / 3600, 2),
+                    'total_queries': stats['total_queries'],
+                    'success_rate': round(stats['success_rate'], 2),
+                    'avg_response_time': round(stats['avg_response_time'], 2),
+                    'current_memory_mb': round(stats['current_memory_mb'], 2),
+                    'current_cpu_percent': round(stats['current_cpu_percent'], 2)
+                },
+                'last_hour': analytics_1h,
+                'last_24_hours': analytics_24h,
+                'real_time': {
+                    'active_queries': stats['active_queries'],
+                    'recent_avg_response_time': round(stats.get('recent_avg_response_time', 0), 2),
+                    'recent_queries_count': stats.get('recent_queries_count', 0)
+                }
+            }
+        })
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': f'Dashboard data alınamadı: {str(e)}'
+        })
 
 @app.route('/api/history')
 def get_conversation_history():

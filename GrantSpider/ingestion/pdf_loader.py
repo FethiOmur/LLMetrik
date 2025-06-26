@@ -58,7 +58,10 @@ class PDFLoader:
                     "file_size": str(file_size),
                     "source_type": "pdf",
                     "page_display": f"Sayfa {page_num + 1}",
-                    "source_display": filename
+                    "source_display": filename,
+                    # Grant ve belge tipi metadata'sı ekle
+                    "grant_group": self._extract_grant_group(filename),
+                    "document_type": self._extract_document_type(filename)
                 }
                 
                 # Document nesnesi oluştur
@@ -147,3 +150,59 @@ class PDFLoader:
             
         except Exception as e:
             raise Exception(f"PDF bilgisi alınamadı: {e}") 
+    
+    def _extract_grant_group(self, filename: str) -> str:
+        """
+        Dosya adından grant grubunu çıkarır
+        
+        Args:
+            filename: Dosya adı
+            
+        Returns:
+            Grant grup ID'si
+        """
+        # AMIF-2025-TF2-AG-INTE-01-WOMEN formatından grant grubunu çıkar
+        grant_pattern = r'(AMIF-\d{4}-[^_]+)'
+        match = re.search(grant_pattern, filename)
+        
+        if match:
+            return match.group(1)
+        else:
+            return "unknown_grant"
+    
+    def _extract_document_type(self, filename: str) -> str:
+        """
+        Dosya adından belge tipini çıkarır
+        
+        Args:
+            filename: Dosya adı
+            
+        Returns:
+            Belge tipi
+        """
+        filename_lower = filename.lower()
+        
+        if 'call-fiche' in filename_lower or 'call_fiche' in filename_lower:
+            return 'call_document'
+        elif 'separator_faq' in filename_lower:
+            return 'faq'
+        elif 'template' in filename_lower:
+            return 'template'
+        elif 'guide' in filename_lower or 'guideline' in filename_lower:
+            return 'guide'
+        elif 'separator_aga' in filename_lower:
+            return 'administrative_guide'
+        elif 'separator_af' in filename_lower:
+            return 'application_form'
+        elif 'separator_om' in filename_lower:
+            return 'operational_manual'
+        elif 'separator_tc' in filename_lower:
+            return 'terms_conditions'
+        elif 'separator_rules' in filename_lower:
+            return 'rules_document'
+        elif 'separator_general-mga' in filename_lower:
+            return 'general_agreement'
+        elif 'evaluation' in filename_lower:
+            return 'evaluation_guide'
+        else:
+            return 'other' 

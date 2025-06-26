@@ -28,8 +28,27 @@ streamlit>=1.39.0
 flask>=3.0.0
 click>=8.1.0
 
+# Workflow ve automation
+schedule>=1.2.0
+asyncio>=3.4.3
+
+# Data analysis ve reporting
+matplotlib>=3.7.0
+seaborn>=0.12.0
+plotly>=5.17.0
+
+# PHASE 3.1: Advanced Analytics & Insights
+scikit-learn>=1.3.0
+scipy>=1.11.0
+jinja2>=3.1.0
+
 # Diğer yardımcı kütüphaneler
 python-dotenv>=1.0.0
 pydantic>=2.9.0
 numpy>=1.24.0
-pandas>=2.0.0 
+pandas>=2.0.0
+psutil>=6.0.0
+
+# PHASE 3.1 Bulk Processing Dependencies
+reportlab>=4.0.0
+concurrent-futures>=3.1.1 

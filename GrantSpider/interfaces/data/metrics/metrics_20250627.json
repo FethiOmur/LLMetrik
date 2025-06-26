@@ -1,0 +1,74 @@
+[
+  {
+    "timestamp": "2025-06-27T01:48:18.208827",
+    "metric_type": "memory_usage",
+    "value": 137.671875,
+    "metadata": {}
+  },
+  {
+    "timestamp": "2025-06-27T01:48:18.208850",
+    "metric_type": "cpu_usage",
+    "value": 0.0,
+    "metadata": {}
+  },
+  {
+    "timestamp": "2025-06-27T01:48:48.213991",
+    "metric_type": "memory_usage",
+    "value": 268.796875,
+    "metadata": {}
+  },
+  {
+    "timestamp": "2025-06-27T01:48:48.214257",
+    "metric_type": "cpu_usage",
+    "value": 0.0,
+    "metadata": {}
+  },
+  {
+    "timestamp": "2025-06-27T01:49:18.216511",
+    "metric_type": "memory_usage",
+    "value": 272.09375,
+    "metadata": {}
+  },
+  {
+    "timestamp": "2025-06-27T01:49:18.216558",
+    "metric_type": "cpu_usage",
+    "value": 0.0,
+    "metadata": {}
+  },
+  {
+    "timestamp": "2025-06-27T01:49:48.221570",
+    "metric_type": "memory_usage",
+    "value": 273.671875,
+    "metadata": {}
+  },
+  {
+    "timestamp": "2025-06-27T01:49:48.221730",
+    "metric_type": "cpu_usage",
+    "value": 0.0,
+    "metadata": {}
+  },
+  {
+    "timestamp": "2025-06-27T01:50:18.226328",
+    "metric_type": "memory_usage",
+    "value": 273.1875,
+    "metadata": {}
+  },
+  {
+    "timestamp": "2025-06-27T01:50:18.226357",
+    "metric_type": "cpu_usage",
+    "value": 0.0,
+    "metadata": {}
+  },
+  {
+    "timestamp": "2025-06-27T01:50:48.227259",
+    "metric_type": "memory_usage",
+    "value": 275.21875,
+    "metadata": {}
+  },
+  {
+    "timestamp": "2025-06-27T01:50:48.227429",
+    "metric_type": "cpu_usage",
+    "value": 0.0,
+    "metadata": {}
+  }
+]

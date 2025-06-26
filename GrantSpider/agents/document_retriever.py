@@ -138,6 +138,86 @@ class DocumentRetrieverAgent(BaseAgent):
         # Uzun sorular için varsayılan olarak ilgili kabul et
         return len(words) >= 5
 
+    def _extract_grant_types_from_query(self, query: str) -> List[str]:
+        """
+        Sorgudan hangi grant tiplerinin bahsedildiğini çıkarır
+        
+        Args:
+            query: Kullanıcı sorgusu
+            
+        Returns:
+            Tespit edilen grant tipleri
+        """
+        query_lower = query.lower()
+        grant_types = []
+        
+        # Grant tip keyword mapping
+        grant_mappings = {
+            'women': ['women', 'woman', 'kadın', 'kadınlar', 'female', 'gender'],
+            'children': ['children', 'child', 'çocuk', 'çocuklar', 'youth', 'minors'],
+            'health': ['health', 'sağlık', 'healthcare', 'medical', 'tıbbi'],
+            'digital': ['digital', 'dijital', 'technology', 'teknoloji', 'online'],
+            'pathways': ['pathways', 'education', 'eğitim', 'training', 'öğretim']
+        }
+        
+        for grant_type, keywords in grant_mappings.items():
+            if any(keyword in query_lower for keyword in keywords):
+                grant_types.append(grant_type)
+        
+        return grant_types
+    
+    def _perform_multi_search(self, query: str, grant_types: List[str]) -> List[Dict[str, Any]]:
+        """
+        Çoklu arama stratejisi - farklı grant tipleri için ayrı aramalar yapar
+        
+        Args:
+            query: Ana sorgu
+            grant_types: Tespit edilen grant tipleri
+            
+        Returns:
+            Birleştirilmiş arama sonuçları
+        """
+        all_documents = []
+        unique_sources = set()
+        
+        # 1. Ana sorgu ile arama
+        main_results = search_documents(query, k=6)
+        for doc in main_results:
+            source = doc.metadata.get('source', '')
+            if source not in unique_sources:
+                unique_sources.add(source)
+                all_documents.append({
+                    "content": doc.page_content,
+                    "metadata": doc.metadata
+                })
+        
+        # 2. Her grant tipi için spesifik arama
+        if grant_types:
+            for grant_type in grant_types:
+                # Grant-specific search terms
+                search_terms = {
+                    'women': 'AMIF-2025 WOMEN grant eligibility criteria budget',
+                    'children': 'AMIF-2025 CHILDREN grant eligibility criteria budget',
+                    'health': 'AMIF-2025 HEALTH grant eligibility criteria budget',
+                    'digital': 'AMIF-2025 DIGITAL grant eligibility criteria budget',
+                    'pathways': 'AMIF-2025 PATHWAYS grant eligibility criteria budget'
+                }
+                
+                search_query = search_terms.get(grant_type, f'AMIF-2025 {grant_type.upper()}')
+                grant_results = search_documents(search_query, k=4)
+                
+                for doc in grant_results:
+                    source = doc.metadata.get('source', '')
+                    if source not in unique_sources:
+                        unique_sources.add(source)
+                        all_documents.append({
+                            "content": doc.page_content,
+                            "metadata": doc.metadata
+                        })
+        
+        print(f"📊 Çoklu arama: {len(main_results)} ana + {len(all_documents) - len(main_results)} ek = {len(all_documents)} toplam sonuç")
+        return all_documents
+
     def execute(self, state: Dict[str, Any]) -> Dict[str, Any]:
         """
         Belge arama işlemini gerçekleştirir
@@ -168,22 +248,33 @@ class DocumentRetrieverAgent(BaseAgent):
             return state
         
         try:
-            # Arama yap
-            documents = search_documents(query, k=8)
+            # Grant tiplerini tespit et
+            grant_types = self._extract_grant_types_from_query(query)
+            print(f"🎯 Tespit edilen grant tipleri: {grant_types}")
             
-            # Belgeleri dict formatına çevir
-            doc_dicts = []
-            for doc in documents:
-                doc_dict = {
-                    "content": doc.page_content,
-                    "metadata": doc.metadata
-                }
-                doc_dicts.append(doc_dict)
+            # Çoklu arama stratejisi kullan
+            if len(grant_types) >= 2:
+                # Karşılaştırma sorusu - çoklu arama yap
+                print(f"🔄 Çoklu grant arama stratejisi kullanılıyor")
+                doc_dicts = self._perform_multi_search(query, grant_types)
+            else:
+                # Tekli arama yap
+                documents = search_documents(query, k=8)
+                
+                # Belgeleri dict formatına çevir
+                doc_dicts = []
+                for doc in documents:
+                    doc_dict = {
+                        "content": doc.page_content,
+                        "metadata": doc.metadata
+                    }
+                    doc_dicts.append(doc_dict)
             
             # Durumu güncelle
             state["retrieved_documents"] = doc_dicts
             state["retrieval_performed"] = True
             state["detected_language"] = detected_language
+            state["grant_types_detected"] = grant_types
             
             print(f"🔍 '{query}' için {len(doc_dicts)} sonuç bulundu")
             print(f"🌐 Algılanan dil: {detected_language}")
