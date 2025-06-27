@@ -8,6 +8,7 @@ let systemStatus = {
     document_count: 0,
     chat_history_count: 0
 };
+let recentQuestions = [];
 
 // ===== DOM ELEMENTS =====
 const messageInput = document.getElementById('messageInput');
@@ -22,21 +23,21 @@ const refreshStatusBtn = document.getElementById('refreshStatusBtn');
 
 // ===== INITIALIZATION =====
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('AMIF Grant Assistant Web Interface başlatılıyor...');
+    console.log('AMIF Grant Assistant Web Interface starting...');
     
     setupEventListeners();
     checkSystemStatus();
     loadChatHistory();
     
-    // Başlangıç mesajını göster
+    // Show startup message
     setTimeout(() => {
-        updateStatusIndicator('ready', 'Sistem Hazır');
+        updateStatusIndicator('ready', 'System Ready');
     }, 1000);
 });
 
 // ===== EVENT LISTENERS =====
 function setupEventListeners() {
-    // Mesaj gönderme
+    // Message sending
     sendBtn.addEventListener('click', handleSendMessage);
     messageInput.addEventListener('keypress', function(e) {
         if (e.key === 'Enter' && !e.shiftKey) {
@@ -72,7 +73,7 @@ async function handleSendMessage() {
         return;
     }
     
-    // UI'yi güncelle
+    // Update UI
     addMessageToChat('user', message);
     messageInput.value = '';
     setLoading(true);
@@ -102,6 +103,9 @@ async function handleSendMessage() {
         
         if (data.success) {
             addMessageToChat('assistant', data.response, data.source_details || data.sources, data.timestamp);
+            
+            // Add to recent questions
+            addToRecentQuestions(message);
             
             // Memory event - yanıt alındı
             onMessageReceived();
@@ -303,13 +307,13 @@ function updateSystemStatusUI() {
         systemStatus.vector_db_ready ? 'ready' : 'error'
     );
     
-    // Doküman sayısı
+    // Document count
     updateStatusItem(statusItems[2],
-        systemStatus.document_count.toLocaleString('tr-TR'),
+        systemStatus.document_count.toLocaleString('en-US'),
         systemStatus.document_count > 0 ? 'ready' : 'error'
     );
     
-    // Geçmiş sayısı
+    // History count
     updateStatusItem(statusItems[3],
         systemStatus.chat_history_count.toString(),
         'ready'
@@ -320,7 +324,7 @@ function updateStatusItem(element, value, status) {
     const valueEl = element.querySelector('.status-value');
     valueEl.textContent = value;
     
-    // Class'ları temizle ve yenisini ekle
+    // Clear classes and add new one
     element.classList.remove('loading', 'ready', 'error');
     element.classList.add(status);
 }
@@ -351,7 +355,7 @@ async function loadChatHistory() {
             data.history.forEach(entry => {
                 addMessageToChat('user', entry.query);
                 addMessageToChat('assistant', entry.response, entry.sources, entry.timestamp);
-                conversationMessageCount += 2; // Her entry için user + assistant
+                conversationMessageCount += 2; // User + assistant for each entry
             });
             
             updateMemorySessionDisplay();
@@ -414,15 +418,15 @@ let currentSessionId = null;
 let conversationMessageCount = 0;
 
 function initializeMemoryPanel() {
-    // Memory panel başlat
+    // Initialize memory panel
     updateMemoryPanel();
     
-    // Session ID'yi cookie'den al
+    // Get session ID from cookie
     currentSessionId = getCookie('session_id');
     if (!currentSessionId) {
-        // Yeni session oluştur
+        // Create new session
         currentSessionId = 'session-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
-        setCookie('session_id', currentSessionId, 1); // 1 gün
+        setCookie('session_id', currentSessionId, 1); // 1 day
     }
     
     updateMemorySessionDisplay();
@@ -452,10 +456,10 @@ function updateMemorySessionDisplay() {
     const conversationCountEl = document.getElementById('conversationCount');
     
     if (sessionIdEl && currentSessionId) {
-        // Session ID'yi kısalt
+        // Shorten session ID
         const shortSessionId = currentSessionId.substring(0, 8) + '...';
         sessionIdEl.textContent = shortSessionId;
-        sessionIdEl.title = currentSessionId; // Tam session ID'yi tooltip olarak göster
+        sessionIdEl.title = currentSessionId; // Show full session ID as tooltip
     }
     
     if (conversationCountEl) {
@@ -469,11 +473,11 @@ function showMemoryActivity(state, message) {
     
     if (!memoryActivity || !activityText) return;
     
-    // Activity state'ini değiştir
+    // Change activity state
     memoryActivity.className = `memory-activity ${state}`;
     activityText.textContent = message;
     
-    // Belirli bir süre sonra normal haline dön
+    // Return to normal state after a certain time
     setTimeout(() => {
         memoryActivity.className = 'memory-activity';
         activityText.textContent = 'Ready';
@@ -492,7 +496,7 @@ function onMessageReceived() {
     showMemoryActivity('saving', 'Updating memory...');
 }
 
-// Cookie yardımcı fonksiyonları
+// Cookie helper functions
 function setCookie(name, value, days) {
     const expires = new Date();
     expires.setTime(expires.getTime() + (days * 24 * 60 * 60 * 1000));
@@ -510,11 +514,94 @@ function getCookie(name) {
     return null;
 }
 
-// Memory paneli başlat
+// ===== RECENT QUESTIONS MANAGEMENT =====
+function addToRecentQuestions(question) {
+    // Prevent duplicate questions
+    if (recentQuestions.includes(question)) {
+        return;
+    }
+    
+    // Add to beginning (newest on top)
+    recentQuestions.unshift(question);
+    
+    // Keep maximum 5 questions
+    if (recentQuestions.length > 5) {
+        recentQuestions = recentQuestions.slice(0, 5);
+    }
+    
+    updateRecentQuestionsUI();
+    saveRecentQuestions();
+}
+
+function updateRecentQuestionsUI() {
+    if (!recentQueriesEl) return;
+    
+    if (recentQuestions.length === 0) {
+        recentQueriesEl.innerHTML = '<div class="no-queries">No questions asked yet.</div>';
+        return;
+    }
+    
+    let html = '';
+    recentQuestions.forEach((question, index) => {
+        // Shorten question (50 characters max)
+        const shortQuestion = question.length > 50 
+            ? question.substring(0, 47) + '...' 
+            : question;
+            
+        html += `
+            <div class="recent-question-item" data-question="${question}" title="${question}">
+                <span class="question-text">${shortQuestion}</span>
+            </div>
+        `;
+    });
+    
+    recentQueriesEl.innerHTML = html;
+    
+    // Add click events
+    recentQueriesEl.querySelectorAll('.recent-question-item').forEach(item => {
+        item.addEventListener('click', function() {
+            const question = this.getAttribute('data-question');
+            messageInput.value = question;
+            messageInput.focus();
+        });
+    });
+}
+
+function loadRecentQuestions() {
+    const saved = localStorage.getItem('recentQuestions');
+    if (saved) {
+        try {
+            recentQuestions = JSON.parse(saved);
+            updateRecentQuestionsUI();
+        } catch (e) {
+            console.error('Recent questions yükleme hatası:', e);
+            recentQuestions = [];
+        }
+    }
+}
+
+function saveRecentQuestions() {
+    try {
+        localStorage.setItem('recentQuestions', JSON.stringify(recentQuestions));
+    } catch (e) {
+        console.error('Recent questions kaydetme hatası:', e);
+    }
+}
+
+function clearRecentQuestions() {
+    recentQuestions = [];
+    updateRecentQuestionsUI();
+    localStorage.removeItem('recentQuestions');
+}
+
+// Initialize memory panel
 initializeMemoryPanel();
+
+    // Load recent questions
+loadRecentQuestions();
 
 // Auto-refresh status
 setInterval(checkSystemStatus, 30000);
 
-console.log('✅ AMIF Grant Assistant Web Interface yüklendi!');
+console.log('✅ AMIF Grant Assistant Web Interface loaded!');
  

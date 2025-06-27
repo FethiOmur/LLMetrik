@@ -1,5 +1,5 @@
 """
-Belge arama ajanı
+Document retrieval agent
 """
 
 from typing import Dict, Any, List
@@ -7,35 +7,35 @@ from agents.base_agent import BaseAgent
 from ingestion.vector_store import search_documents, get_collection_info
 
 class DocumentRetrieverAgent(BaseAgent):
-    """Belge arama işlemlerini gerçekleştiren ajan"""
+    """Agent that performs document search operations"""
     
     def __init__(self, vector_store=None):
         super().__init__(
             name="document_retriever",
-            description="Soruya uygun belgeleri vektör veritabanından arar"
+            description="Searches for relevant documents from vector database based on query"
         )
         # vector_store parametresi compatibility için, ama kullanmıyoruz
     
     def _detect_language(self, text: str) -> str:
         """
-        Basit dil algılama
+        Simple language detection
         
         Args:
-            text: Analiz edilecek metin
+            text: Text to analyze
             
         Returns:
-            Dil kodu ('tr', 'en', 'it')
+            Language code ('tr', 'en', 'it')
         """
         text_lower = text.lower()
         
-        # Türkçe belirteçler
+        # Turkish indicators
         turkish_indicators = [
             'nedir', 'nelerdir', 'nasıl', 'ne', 'hangi', 'için', 'ile', 'bir', 'bu', 'şu',
             'mı', 'mi', 'mu', 'mü', 'da', 'de', 'ta', 'te', 'la', 'le', 'ın', 'in', 'un', 'ün',
             'hibe', 'başvuru', 'proje', 'belgeler', 'kriterler', 'süreç'
         ]
         
-        # İngilizce belirteçler  
+        # English indicators  
         english_indicators = [
             'what', 'how', 'which', 'where', 'when', 'why', 'is', 'are', 'the', 'and', 'or',
             'in', 'on', 'at', 'for', 'with', 'by', 'from', 'to', 'of', 'grant', 'application',
@@ -44,25 +44,25 @@ class DocumentRetrieverAgent(BaseAgent):
             'this', 'that', 'these', 'those', 'do', 'does', 'did', 'have', 'has', 'had'
         ]
         
-        # İtalyanca belirteçler
+        # Italian indicators
         italian_indicators = [
             'che', 'cosa', 'come', 'quale', 'dove', 'quando', 'perché', 'è', 'sono', 'il', 'la',
             'di', 'a', 'da', 'in', 'con', 'su', 'per', 'tra', 'fra', 'sovvenzioni', 'domanda',
             'progetto', 'documenti', 'criteri', 'processo'
         ]
         
-        # Kelimeleri ayır
+        # Split words
         words = text_lower.split()
         
-        # Her dil için sayaç - exact match kullan
+        # Counter for each language - use exact match
         tr_score = sum(1 for word in words if word in turkish_indicators)
         en_score = sum(1 for word in words if word in english_indicators)
         it_score = sum(1 for word in words if word in italian_indicators)
         
-        print(f"🔍 Dil skorları - TR: {tr_score}, EN: {en_score}, IT: {it_score}")
-        print(f"📝 Kelimeler: {words}")
+        print(f"🔍 Language scores - TR: {tr_score}, EN: {en_score}, IT: {it_score}")
+        print(f"📝 Words: {words}")
         
-        # En yüksek skoru bulan dili döndür
+        # Return language with highest score
         if tr_score >= en_score and tr_score >= it_score:
             return 'turkish'
         elif en_score >= it_score:

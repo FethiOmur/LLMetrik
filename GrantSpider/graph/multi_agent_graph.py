@@ -1,5 +1,5 @@
 """
-LangGraph çoklu ajan yapısı
+LangGraph multi-agent structure
 """
 
 from langgraph.graph import StateGraph, START, END
@@ -15,7 +15,7 @@ from graph.nodes import (
 )
 
 class MultiAgentGraph:
-    """LangGraph çoklu ajan sistemi"""
+    """LangGraph multi-agent system"""
     
     def __init__(self, vector_store):
         self.vector_store = vector_store
@@ -23,51 +23,51 @@ class MultiAgentGraph:
         self._build_graph()
     
     def _build_graph(self):
-        """Graf yapısını oluşturur"""
-        # Ajanları başlat
+        """Builds graph structure"""
+        # Initialize agents
         initialize_agents(self.vector_store)
         
-        # StateGraph oluştur
+        # Create StateGraph
         builder = StateGraph(MultiAgentState)
         
-        # Düğümleri ekle
+        # Add nodes
         builder.add_node("supervisor", supervisor_node)
         builder.add_node("document_retriever", document_retriever_node)
         builder.add_node("cross_document", cross_document_node)
         builder.add_node("qa_agent", qa_agent_node)
         builder.add_node("source_tracker", source_tracker_node)
         
-        # Graf kenarlarını tanımla
+        # Define graph edges
         builder.add_edge(START, "supervisor")
         builder.add_edge("document_retriever", "supervisor")
         builder.add_edge("cross_document", "supervisor")
         builder.add_edge("qa_agent", "supervisor")
         builder.add_edge("source_tracker", "supervisor")
         
-        # Memory checkpointer ekle (basit in-memory)
+        # Add memory checkpointer (simple in-memory)
         memory = MemorySaver()
         
-        # Graf'ı derle
+        # Compile graph
         self.graph = builder.compile(checkpointer=memory)
     
     def run(self, query: str, session_id: str = "default") -> dict:
         """
-        Graf'ı çalıştırır
+        Runs the graph
         
         Args:
-            query: Kullanıcı sorgusu
-            session_id: Session kimliği
+            query: User query
+            session_id: Session identifier
             
         Returns:
-            Graf sonucu
+            Graph result
         """
-        # İlk durumu oluştur
+        # Create initial state
         initial_state = MultiAgentState(
             query=query,
             session_id=session_id
         )
         
-        # Graf'ı çalıştır
+        # Run graph
         config = {"configurable": {"thread_id": session_id}}
         
         result = self.graph.invoke(initial_state, config=config)
@@ -84,22 +84,22 @@ class MultiAgentGraph:
     
     def stream(self, query: str, session_id: str = "default"):
         """
-        Graf'ı streaming modunda çalıştırır
+        Runs graph in streaming mode
         
         Args:
-            query: Kullanıcı sorgusu
-            session_id: Session kimliği
+            query: User query
+            session_id: Session identifier
             
         Yields:
-            Graf adımları
+            Graph steps
         """
-        # İlk durumu oluştur
+        # Create initial state
         initial_state = MultiAgentState(
             query=query,
             session_id=session_id
         )
         
-        # Graf'ı streaming mode'da çalıştır
+        # Run graph in streaming mode
         config = {"configurable": {"thread_id": session_id}}
         
         for step in self.graph.stream(initial_state, config=config):
@@ -107,13 +107,13 @@ class MultiAgentGraph:
     
     def get_graph_image(self) -> bytes:
         """
-        Graf görselini döndürür
+        Returns graph visualization
         
         Returns:
-            Graf görseli (PNG bytes)
+            Graph visualization (PNG bytes)
         """
         try:
             return self.graph.get_graph().draw_mermaid_png()
         except Exception as e:
-            print(f"Graf görseli oluşturulamadı: {e}")
+            print(f"Could not create graph visualization: {e}")
             return None 

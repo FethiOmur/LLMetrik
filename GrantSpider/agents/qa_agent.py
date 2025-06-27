@@ -1,5 +1,5 @@
 """
-Soru-cevap ajanı
+Question-answering agent
 """
 
 from typing import Dict, Any, List
@@ -8,18 +8,18 @@ from config.models import get_llm_model
 from langchain_core.prompts import PromptTemplate
 
 class QAAgent(BaseAgent):
-    """Soru-cevap işlemlerini gerçekleştiren ajan"""
+    """Agent that performs question-answering operations"""
     
     def __init__(self):
         super().__init__(
             name="qa_agent",
-            description="Belgelerden alınan bilgilere dayanarak soruları yanıtlar"
+            description="Answers questions based on information retrieved from documents"
         )
         self.llm = get_llm_model()
         self.universal_prompt_template = self._create_universal_prompt_template()
     
     def _create_universal_prompt_template(self) -> PromptTemplate:
-        """Evrensel QA prompt template - cross-document analysis destekli"""
+        """Universal QA prompt template - supports cross-document analysis"""
         template = """
 You are given the following information from grant documents and a question.
 Based on this information, answer the question accurately and in detail.

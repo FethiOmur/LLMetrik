@@ -1,3 +1,3 @@
 """
-Memory modülü - Sohbet belleği ve durum yönetimi
+Memory module - Chat memory and state management
 """ 

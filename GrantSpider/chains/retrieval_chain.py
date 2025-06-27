@@ -1,5 +1,5 @@
 """
-Modern RAG (Retrieval Augmented Generation) Zinciri
+Modern RAG (Retrieval Augmented Generation) Chain
 """
 
 from typing import Dict, Any, List
@@ -8,7 +8,7 @@ from ingestion.vector_store import VectorStore
 from config.models import get_llm_model
 
 class RetrievalChain:
-    """Modern RAG zinciri sınıfı - LangGraph ile uyumlu"""
+    """Modern RAG chain class - compatible with LangGraph"""
     
     def __init__(self, vector_store: VectorStore):
         self.vector_store = vector_store

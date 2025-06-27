@@ -1,5 +1,5 @@
 """
-Yapılandırma ayarları - DeepSeek R1 için OpenRouter entegrasyonu
+Configuration settings - OpenRouter integration for DeepSeek R1
 """
 
 import os
@@ -7,14 +7,14 @@ from typing import Dict, Any
 from pathlib import Path
 from dotenv import load_dotenv
 
-# .env dosyasını yükle
+# Load .env file
 load_dotenv()
 
-# Proje kök dizinini belirle
+# Define project root directory
 PROJECT_ROOT = Path(__file__).parent.parent
 
 class Settings:
-    """Uygulama yapılandırma ayarları"""
+    """Application configuration settings"""
     
     # API Keys - OpenAI Direct API
     OPENAI_API_KEY: str = os.getenv("OPENAI_API_KEY", "")
@@ -23,28 +23,28 @@ class Settings:
     
 
     
-    # Model ayarları - OpenAI
+    # Model settings - OpenAI
     DEFAULT_LLM_MODEL: str = os.getenv("LLM_MODEL", "o4-mini")
     LLM_MODEL: str = os.getenv("LLM_MODEL", "o4-mini")
     EMBEDDING_MODEL: str = os.getenv("EMBEDDING_MODEL", "text-embedding-3-small")
     
-    # Vektör veritabanı ayarları
+    # Vector database settings
     VECTOR_DB_TYPE: str = "chromadb"  # chromadb, faiss
     VECTOR_DB_PATH: str = str(PROJECT_ROOT / "data" / "db")  # Absolute path
     
-    # PDF işleme ayarları
+    # PDF processing settings
     CHUNK_SIZE: int = int(os.getenv("CHUNK_SIZE", "1000"))
     CHUNK_OVERLAP: int = int(os.getenv("CHUNK_OVERLAP", "200"))
     
-    # Uygulama ayarları
+    # Application settings
     MAX_CHAT_HISTORY: int = 50
     DEBUG: bool = os.getenv("DEBUG", "False").lower() == "true"
     
-    # OpenRouter için ek ayarlar
+    # Additional settings for OpenRouter
     OPENROUTER_APP_NAME: str = os.getenv("OPENROUTER_APP_NAME", "GrantSpider")
     OPENROUTER_SITE_URL: str = os.getenv("OPENROUTER_SITE_URL", "https://github.com/your-username/GrantSpider")
 
 settings = Settings()
 
-# Geriye uyumluluk için SETTINGS alias'ı
+# SETTINGS alias for backward compatibility
 SETTINGS = settings 

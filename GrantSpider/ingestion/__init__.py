@@ -1,22 +1,22 @@
 """
-Veri işleme (ingestion) modülü
+Data ingestion module
 
-Bu modül PDF dosyalarını yükleme, metin işleme ve vektör veritabanına kaydetme
-işlemlerini gerçekleştirir.
+This module performs PDF file loading, text processing and vector database
+storage operations.
 
-Kullanım örneği:
+Usage example:
     from ingestion import PDFLoader, TextProcessor
     from ingestion.vector_store import get_vector_store, add_documents_to_vector_store
     
-    # PDF'leri yükle
+    # Load PDFs
     loader = PDFLoader()
     documents = loader.load_all_pdfs("data/raw")
     
-    # Metinleri işle ve parçala
+    # Process and chunk texts
     processor = TextProcessor()
     chunks = processor.process_documents(documents)
     
-    # Vektör veritabanına kaydet
+    # Save to vector database
     add_documents_to_vector_store(chunks)
 """
 
@@ -27,13 +27,13 @@ __all__ = ["PDFLoader", "TextProcessor"]
 
 def create_ingestion_pipeline(data_dir: str = "data/raw"):
     """
-    Tam bir veri işleme pipeline'ı oluşturur
+    Creates a complete data processing pipeline
     
     Args:
-        data_dir: PDF dosyalarının bulunduğu dizin
+        data_dir: Directory containing PDF files
         
     Returns:
-        (loader, processor) tuple'ı
+        (loader, processor) tuple
     """
     loader = PDFLoader(data_dir=data_dir)
     processor = TextProcessor()
@@ -42,14 +42,14 @@ def create_ingestion_pipeline(data_dir: str = "data/raw"):
 
 def run_full_ingestion(data_dir: str = "data/raw", reset_db: bool = False):
     """
-    Tam veri işleme sürecini çalıştırır
+    Runs the complete data processing workflow
     
     Args:
-        data_dir: PDF dosyalarının bulunduğu dizin
-        reset_db: Veritabanını sıfırla
+        data_dir: Directory containing PDF files
+        reset_db: Reset database
         
     Returns:
-        Başarılı ise True
+        True if successful
     """
     try:
         from .vector_store import reset_vector_store, add_documents_to_vector_store

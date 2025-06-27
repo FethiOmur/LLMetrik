@@ -1,11 +1,11 @@
 """
 GrantSpider Workflows Module
 
-Bu modül GrantSpider'ın operasyonel iş akışlarını yönetir:
-- Bulk Document Processing: Toplu doküman işleme
-- Automated Report Generation: Otomatik rapor üretimi  
-- Scheduled Analysis Jobs: Zamanlanmış analiz işleri
-- Export/Import Functionality: Dışa/içe aktarım işlevleri
+This module manages GrantSpider's operational workflows:
+- Bulk Document Processing: Batch document processing
+- Automated Report Generation: Automated report generation  
+- Scheduled Analysis Jobs: Scheduled analysis jobs
+- Export/Import Functionality: Export/import functionality
 """
 
 from .bulk_processor import (

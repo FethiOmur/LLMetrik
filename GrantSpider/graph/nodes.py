@@ -1,5 +1,5 @@
 """
-LangGraph düğümlerinin tanımları
+LangGraph node definitions
 """
 
 from typing import Dict, Any, Literal
@@ -11,7 +11,7 @@ from agents.source_tracker import SourceTrackerAgent
 from agents.supervisor import SupervisorAgent
 from agents.cross_document_agent import CrossDocumentAgent
 
-# Global ajan instanceları
+# Global agent instances
 document_retriever_agent = None
 qa_agent = None
 source_tracker_agent = None
@@ -19,7 +19,7 @@ cross_document_agent = None
 supervisor_agent = None
 
 def initialize_agents(vector_store):
-    """Ajanları başlatır"""
+    """Initializes agents"""
     global document_retriever_agent, qa_agent, source_tracker_agent, cross_document_agent, supervisor_agent
     
     document_retriever_agent = DocumentRetrieverAgent(vector_store)
@@ -30,13 +30,13 @@ def initialize_agents(vector_store):
 
 def supervisor_node(state: MultiAgentState) -> Command[Literal["document_retriever", "qa_agent", "cross_document", "source_tracker", "__end__"]]:
     """
-    Supervisor düğümü - Diğer ajanları koordine eder
+    Supervisor node - coordinates other agents
     
     Args:
-        state: Mevcut durum
+        state: Current state
         
     Returns:
-        Sonraki ajanı gösteren Command
+        Command pointing to next agent
     """
     state_dict = {
         "query": state.query,
@@ -51,13 +51,13 @@ def supervisor_node(state: MultiAgentState) -> Command[Literal["document_retriev
 
 def document_retriever_node(state: MultiAgentState) -> MultiAgentState:
     """
-    Belge arama düğümü
+    Document retrieval node
     
     Args:
-        state: Mevcut durum
+        state: Current state
         
     Returns:
-        Güncellenmiş durum
+        Updated state
     """
     state_dict = {
         "query": state.query,
@@ -68,7 +68,7 @@ def document_retriever_node(state: MultiAgentState) -> MultiAgentState:
     
     updated_state = document_retriever_agent.execute(state_dict)
     
-    # Durumu güncelle
+    # Update state
     state.retrieved_documents = updated_state.get("retrieved_documents", [])
     state.retrieval_performed = updated_state.get("retrieval_performed", False)
     state.detected_language = updated_state.get("detected_language", "tr")
@@ -77,13 +77,13 @@ def document_retriever_node(state: MultiAgentState) -> MultiAgentState:
 
 def qa_agent_node(state: MultiAgentState) -> MultiAgentState:
     """
-    QA düğümü
+    QA node
     
     Args:
-        state: Mevcut durum
+        state: Current state
         
     Returns:
-        Güncellenmiş durum
+        Updated state
     """
     state_dict = {
         "query": state.query,
@@ -95,7 +95,7 @@ def qa_agent_node(state: MultiAgentState) -> MultiAgentState:
     
     updated_state = qa_agent.execute(state_dict)
     
-    # Durumu güncelle
+    # Update state
     state.qa_response = updated_state.get("qa_response", "")
     state.qa_performed = updated_state.get("qa_performed", False)
     
@@ -103,13 +103,13 @@ def qa_agent_node(state: MultiAgentState) -> MultiAgentState:
 
 def cross_document_node(state: MultiAgentState) -> MultiAgentState:
     """
-    Cross-document analiz düğümü
+    Cross-document analysis node
     
     Args:
-        state: Mevcut durum
+        state: Current state
         
     Returns:
-        Güncellenmiş durum
+        Updated state
     """
     state_dict = {
         "query": state.query,
@@ -120,7 +120,7 @@ def cross_document_node(state: MultiAgentState) -> MultiAgentState:
     
     updated_state = cross_document_agent.execute(state_dict)
     
-    # Durumu güncelle
+    # Update state
     state.cross_document_analysis = updated_state.get("cross_document_analysis", {})
     state.cross_document_performed = updated_state.get("cross_document_performed", False)
     
@@ -128,13 +128,13 @@ def cross_document_node(state: MultiAgentState) -> MultiAgentState:
 
 def source_tracker_node(state: MultiAgentState) -> MultiAgentState:
     """
-    Kaynak takip düğümü
+    Source tracking node
     
     Args:
-        state: Mevcut durum
+        state: Current state
         
     Returns:
-        Güncellenmiş durum
+        Updated state
     """
     state_dict = {
         "retrieved_documents": state.retrieved_documents,
@@ -146,7 +146,7 @@ def source_tracker_node(state: MultiAgentState) -> MultiAgentState:
     
     updated_state = source_tracker_agent.execute(state_dict)
     
-    # Durumu güncelle
+    # Update state
     state.sources = updated_state.get("sources", [])
     state.cited_response = updated_state.get("cited_response", "")
     state.source_tracking_performed = updated_state.get("source_tracking_performed", False)

@@ -1,5 +1,5 @@
 """
-Gelişmiş Mantık Yürütme Zinciri
+Advanced Reasoning Chain
 """
 
 from typing import Dict, Any, List
@@ -7,7 +7,7 @@ from langchain_core.prompts import PromptTemplate
 from config.models import get_llm_model
 
 class ReasoningChain:
-    """Mantık yürütme zinciri sınıfı - LangGraph ile uyumlu"""
+    """Reasoning chain class - compatible with LangGraph"""
     
     def __init__(self):
         self.llm = get_llm_model()

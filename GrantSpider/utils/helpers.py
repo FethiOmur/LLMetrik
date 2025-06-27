@@ -1,5 +1,5 @@
 """
-Yardımcı fonksiyonlar
+Helper functions
 """
 
 import os
@@ -9,22 +9,22 @@ from datetime import datetime
 
 def generate_session_id() -> str:
     """
-    Benzersiz session ID oluşturur
+    Generates unique session ID
     
     Returns:
-        UUID formatında session ID
+        Session ID in UUID format
     """
     return str(uuid.uuid4())
 
 def format_timestamp(timestamp: datetime = None) -> str:
     """
-    Zaman damgasını formatlar
+    Formats timestamp
     
     Args:
-        timestamp: Zaman damgası, None ise şu anki zaman
+        timestamp: Timestamp, uses current time if None
         
     Returns:
-        Formatlanmış zaman string'i
+        Formatted time string
     """
     if timestamp is None:
         timestamp = datetime.now()
@@ -33,14 +33,14 @@ def format_timestamp(timestamp: datetime = None) -> str:
 
 def truncate_text(text: str, max_length: int = 100) -> str:
     """
-    Metni belirli uzunlukta keser
+    Truncates text to specified length
     
     Args:
-        text: Kesilecek metin
-        max_length: Maksimum uzunluk
+        text: Text to truncate
+        max_length: Maximum length
         
     Returns:
-        Kesilmiş metin
+        Truncated text
     """
     if len(text) <= max_length:
         return text
@@ -49,15 +49,15 @@ def truncate_text(text: str, max_length: int = 100) -> str:
 
 def clean_filename(filename: str) -> str:
     """
-    Dosya adını temizler
+    Cleans filename
     
     Args:
-        filename: Temizlenecek dosya adı
+        filename: Filename to clean
         
     Returns:
-        Temizlenmiş dosya adı
+        Cleaned filename
     """
-    # Özel karakterleri temizle
+    # Clean special characters
     invalid_chars = '<>:"/\\|?*'
     for char in invalid_chars:
         filename = filename.replace(char, '_')
@@ -66,48 +66,48 @@ def clean_filename(filename: str) -> str:
 
 def ensure_directory_exists(directory_path: str):
     """
-    Dizinin var olduğundan emin olur, yoksa oluşturur
+    Ensures directory exists, creates if it doesn't
     
     Args:
-        directory_path: Dizin yolu
+        directory_path: Directory path
     """
     if not os.path.exists(directory_path):
         os.makedirs(directory_path, exist_ok=True)
 
 def calculate_similarity_percentage(score: float) -> str:
     """
-    Benzerlik skorunu yüzde formatına çevirir
+    Converts similarity score to percentage format
     
     Args:
-        score: 0-1 arası benzerlik skoru
+        score: Similarity score between 0-1
         
     Returns:
-        Yüzde formatında string
+        String in percentage format
     """
     percentage = score * 100
     return f"{percentage:.1f}%"
 
 def extract_file_extension(filename: str) -> str:
     """
-    Dosya uzantısını çıkarır
+    Extracts file extension
     
     Args:
-        filename: Dosya adı
+        filename: Filename
         
     Returns:
-        Dosya uzantısı (nokta olmadan)
+        File extension (without dot)
     """
     return os.path.splitext(filename)[1].lower().lstrip('.')
 
 def format_file_size(size_bytes: int) -> str:
     """
-    Dosya boyutunu okunabilir formata çevirir
+    Converts file size to readable format
     
     Args:
-        size_bytes: Byte cinsinden dosya boyutu
+        size_bytes: File size in bytes
         
     Returns:
-        Formatlanmış dosya boyutu
+        Formatted file size
     """
     if size_bytes == 0:
         return "0 B"
@@ -123,13 +123,13 @@ def format_file_size(size_bytes: int) -> str:
 
 def validate_query(query: str) -> bool:
     """
-    Sorgu geçerliliğini kontrol eder
+    Validates query
     
     Args:
-        query: Kontrol edilecek sorgu
+        query: Query to validate
         
     Returns:
-        Geçerli ise True
+        True if valid
     """
     if not query or not query.strip():
         return False
@@ -141,19 +141,19 @@ def validate_query(query: str) -> bool:
 
 def extract_keywords(text: str, min_length: int = 3) -> List[str]:
     """
-    Metinden anahtar kelimeleri çıkarır
+    Extracts keywords from text
     
     Args:
-        text: Analiz edilecek metin
-        min_length: Minimum kelime uzunluğu
+        text: Text to analyze
+        min_length: Minimum word length
         
     Returns:
-        Anahtar kelimeler listesi
+        List of keywords
     """
-    # Basit keyword extraction
+    # Simple keyword extraction
     words = text.lower().split()
     
-    # Stop words (Türkçe)
+    # Stop words (Turkish and English)
     stop_words = {
         've', 'ile', 'bu', 'bir', 'için', 'den', 'dan', 'de', 'da',
         'ki', 'olan', 'olarak', 'olan', 'sonra', 'kadar', 'daha',
@@ -164,13 +164,13 @@ def extract_keywords(text: str, min_length: int = 3) -> List[str]:
     
     keywords = []
     for word in words:
-        # Temizle
+        # Clean
         word = word.strip('.,!?;:"()[]{}')
         
-        # Koşulları kontrol et
+        # Check conditions
         if (len(word) >= min_length and 
             word.lower() not in stop_words and 
             word.isalpha()):
             keywords.append(word.lower())
     
-    return list(set(keywords))  # Benzersiz kelimeler 
+    return list(set(keywords))  # Unique words 

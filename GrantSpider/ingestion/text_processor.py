@@ -1,5 +1,5 @@
 """
-Metin işleme ve chunking işlemleri
+Text processing and chunking operations
 """
 
 from typing import List
@@ -10,10 +10,10 @@ from config.settings import settings
 from ingestion.vector_store import add_documents_to_vector_store
 
 class TextProcessor:
-    """Metin işleme ve chunking sınıfı"""
+    """Text processing and chunking class"""
     
     def __init__(self):
-        """Text splitter'ı başlat"""
+        """Initialize text splitter"""
         self.text_splitter = RecursiveCharacterTextSplitter(
             chunk_size=settings.CHUNK_SIZE,
             chunk_overlap=settings.CHUNK_OVERLAP,
@@ -23,13 +23,13 @@ class TextProcessor:
     
     def process_documents(self, documents: List[Document]) -> List[Document]:
         """
-        Belgeleri işle ve chunk'lara böl
+        Process documents and split into chunks
         
         Args:
-            documents: İşlenecek belgeler
+            documents: Documents to process
             
         Returns:
-            İşlenmiş ve chunk'lanmış belgeler
+            Processed and chunked documents
         """
         if not documents:
             return []

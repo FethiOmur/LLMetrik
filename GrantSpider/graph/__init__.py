@@ -1,3 +1,3 @@
 """
-Graph modülü - LangGraph yapısı
+Graph module - LangGraph structure
 """ 

@@ -1,5 +1,5 @@
 """
-Model yapılandırmaları - DeepSeek R1 ve OpenRouter entegrasyonu
+Model configurations - DeepSeek R1 and OpenRouter integration
 """
 
 from typing import Optional
@@ -9,10 +9,10 @@ from config.settings import settings
 
 def get_llm_model(model_name: Optional[str] = None):
     """
-    LLM modelini döndürür - DeepSeek R1 için OpenRouter desteği
+    Returns LLM model - OpenRouter support for DeepSeek R1
     
     Args:
-        model_name: Model adı, None ise default model kullanılır
+        model_name: Model name, uses default model if None
         
     Returns:
         LLM model instance
@@ -20,7 +20,7 @@ def get_llm_model(model_name: Optional[str] = None):
     model_name = model_name or settings.DEFAULT_LLM_MODEL
     
     if model_name.startswith("gpt"):
-        # OpenAI direct API kullan
+        # Use OpenAI direct API
         return ChatOpenAI(
             model=model_name,
             api_key=settings.OPENAI_API_KEY,
@@ -34,7 +34,7 @@ def get_llm_model(model_name: Optional[str] = None):
             temperature=0.7
         )
     else:
-        # Default olarak OpenAI kullan
+        # Use OpenAI as default
         return ChatOpenAI(
             model=model_name,
             api_key=settings.OPENAI_API_KEY,
@@ -44,7 +44,7 @@ def get_llm_model(model_name: Optional[str] = None):
 
 def get_embedding_model():
     """
-    Embedding modelini döndürür - OpenAI Direct Client Wrapper
+    Returns embedding model - OpenAI Direct Client Wrapper
     
     Returns:
         Embedding model instance
@@ -53,11 +53,11 @@ def get_embedding_model():
     import os
     
     class OpenAIDirectEmbeddings:
-        """OpenAI client'ını doğrudan kullanan wrapper"""
+        """Wrapper that directly uses OpenAI client"""
         
         def __init__(self):
             self.api_key = settings.OPENAI_API_KEY
-            # Base URL'i explicit olarak belirt - bu çok önemli!
+            # Explicitly specify Base URL - this is very important!
             self.client = openai.OpenAI(
                 api_key=self.api_key,
                 base_url="https://api.openai.com/v1/"
@@ -65,7 +65,7 @@ def get_embedding_model():
             self.model = "text-embedding-3-small"
         
         def embed_documents(self, texts):
-            """Belge listesi için embedding oluştur"""
+            """Create embeddings for document list"""
             try:
                 response = self.client.embeddings.create(
                     model=self.model,
@@ -73,11 +73,11 @@ def get_embedding_model():
                 )
                 return [data.embedding for data in response.data]
             except Exception as e:
-                print(f"❌ Embedding hatası: {e}")
+                print(f"❌ Embedding error: {e}")
                 raise
         
         def embed_query(self, text):
-            """Tek bir sorgu için embedding oluştur"""
+            """Create embedding for a single query"""
             try:
                 response = self.client.embeddings.create(
                     model=self.model,
@@ -85,7 +85,7 @@ def get_embedding_model():
                 )
                 return response.data[0].embedding
             except Exception as e:
-                print(f"❌ Embedding hatası: {e}")
+                print(f"❌ Embedding error: {e}")
                 raise
     
     return OpenAIDirectEmbeddings() 

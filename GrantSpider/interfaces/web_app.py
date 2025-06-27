@@ -1,6 +1,6 @@
 """
-AMIF Grant Assistant - Web Arayüzü
-LangGraph Multi-Agent System kullanıyor
+AMIF Grant Assistant - Web Interface
+Uses LangGraph Multi-Agent System
 """
 
 import sys
@@ -8,7 +8,7 @@ import os
 from pathlib import Path
 import uuid
 
-# Ana dizini Python path'ine ekle
+# Add main directory to Python path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from flask import Flask, render_template, request, jsonify
@@ -21,64 +21,64 @@ app = Flask(__name__,
            template_folder='templates',
            static_folder='static')
 
-# Global değişkenler
+# Global variables
 db_connected = False
 db_info = {}
 multi_agent_graph = None
 
 def initialize_multi_agent_system():
-    """Multi-Agent Graph sistemini başlat"""
+    """Start Multi-Agent Graph system"""
     global multi_agent_graph, db_connected, db_info
     try:
-        print("🚀 AMIF Grant Assistant başlatılıyor...")
+        print("🚀 Starting AMIF Grant Assistant...")
         
-        # Vector store'u başlat
-        print("🔧 Vector store başlatılıyor...")
+        # Start vector store
+        print("🔧 Starting vector store...")
         vector_store = get_vector_store()
-        print("✅ Vector store hazır")
+        print("✅ Vector store ready")
         
-        # Collection bilgilerini al
+        # Get collection information
         db_info = get_collection_info()
         db_connected = True
-        print(f"✅ Veritabanı bağlantısı başarılı: {db_info['document_count']} doküman")
+        print(f"✅ Database connection successful: {db_info['document_count']} documents")
         
-        # Multi-Agent Graph'ı başlat
-        print("🤖 Multi-Agent Graph başlatılıyor...")
+        # Start Multi-Agent Graph
+        print("🤖 Starting Multi-Agent Graph...")
         multi_agent_graph = MultiAgentGraph(vector_store)
-        print("✅ Multi-Agent Graph hazır")
+        print("✅ Multi-Agent Graph ready")
         
         return True
     except Exception as e:
-        print(f"❌ Multi-Agent sistem başlatma hatası: {e}")
+        print(f"❌ Multi-Agent system startup error: {e}")
         db_connected = False
         return False
 
 def get_demo_response(query: str):
-    """Demo yanıtı döndür (fallback)"""
+    """Return demo response (fallback)"""
     return {
         'qa_response': f"""
-        🤖 **AMIF Grant Assistant (Demo Modu)**
+        🤖 **AMIF Grant Assistant (Demo Mode)**
         
-        Üzgünüm, şu anda multi-agent sistemine bağlanamıyorum.
-        Sorgunuz: "{query}"
+        Sorry, I cannot connect to the multi-agent system at the moment.
+        Your query: "{query}"
         
-        **Demo modunda çalışıyorum.** Gerçek sistem için lütfen daha sonra tekrar deneyin.
+        **I am working in demo mode.** Please try again later for the real system.
         """,
         'sources': [],
-        'cited_response': 'Demo modunda kaynak bilgisi mevcut değil.',
-        'detected_language': 'tr'
+        'cited_response': 'Source information is not available in demo mode.',
+        'detected_language': 'en'
     }
 
 @app.route('/')
 def index():
-    """Ana sayfa"""
+    """Main page"""
     return render_template('index.html', 
                          db_connected=db_connected, 
                          db_info=db_info)
 
 @app.route('/search', methods=['POST'])
 def search():
-    """Multi-Agent Graph kullanarak arama"""
+    """Search using Multi-Agent Graph"""
     try:
         data = request.get_json()
         query = data.get('query', data.get('message', '')).strip()
@@ -86,26 +86,26 @@ def search():
         if not query:
             return jsonify({
                 'success': False,
-                'error': 'Arama sorgusu boş olamaz'
+                'error': 'Search query cannot be empty'
             })
         
-        print(f"🔍 Multi-Agent Graph ile sorgu işleniyor: '{query}'")
+        print(f"🔍 Processing query with Multi-Agent Graph: '{query}'")
         
-        # Multi-Agent Graph sistemini kullan
+        # Use Multi-Agent Graph system
         if multi_agent_graph and db_connected:
-            # Session ID - çerezden al veya yeni oluştur
+            # Session ID - get from cookies or create new
             session_id = request.cookies.get('session_id')
             if not session_id:
                 session_id = str(uuid.uuid4())
             
             print(f"🎯 Session ID: {session_id}")
-            print("🚀 Multi-Agent workflow başlatılıyor...")
+            print("🚀 Starting Multi-Agent workflow...")
             
-            # Performance tracking ile Multi-Agent Graph'ı çalıştır
+            # Run Multi-Agent Graph with performance tracking
             with QueryTracker(session_id, query) as query_tracker:
                 result = multi_agent_graph.run(query, session_id)
                 
-                # Document metrics kaydet
+                # Record document metrics
                 performance_tracker.record_document_metrics(
                     session_id,
                     documents_retrieved=len(result.get('retrieved_documents', [])),
@@ -113,29 +113,29 @@ def search():
                     detected_language=result.get('detected_language', 'unknown')
                 )
             
-            print(f"✅ Multi-Agent workflow tamamlandı")
-            print(f"📄 QA Yanıt uzunluğu: {len(result.get('qa_response', ''))} karakter")
-            print(f"📋 Kaynak sayısı: {len(result.get('sources', []))}")
+            print(f"✅ Multi-Agent workflow completed")
+            print(f"📄 QA Response length: {len(result.get('qa_response', ''))} characters")
+            print(f"📋 Source count: {len(result.get('sources', []))}")
             
-            # Kaynakları formatla
+            # Format sources
             sources = result.get('sources', [])
             retrieved_docs = result.get('retrieved_documents', [])
             source_details = []
             
-            # Eğer sources boşsa, retrieved_documents'ten kaynak oluştur
+            # If sources is empty, create sources from retrieved_documents
             if not sources and retrieved_docs:
                 for i, doc in enumerate(retrieved_docs[:8], 1):
                     metadata = doc.get('metadata', {})
                     
-                    # Kaynak adını çıkar
+                    # Extract source name
                     source_path = metadata.get('source', '')
                     clean_source = source_path.replace('data/raw/', '').replace('.pdf', '')
                     if not clean_source:
-                        clean_source = metadata.get('filename', 'Bilinmeyen')
+                        clean_source = metadata.get('filename', 'Unknown')
                     
-                    # Sayfa bilgisini çıkar
+                    # Extract page information
                     page_number = metadata.get('page_number', metadata.get('page', ''))
-                    page_display = f"Sayfa {page_number}" if page_number else 'Sayfa bilinmiyor'
+                    page_display = f"Page {page_number}" if page_number else 'Unknown page'
                     
                     source_details.append({
                         'rank': i,
@@ -144,17 +144,17 @@ def search():
                         'content': doc.get('content', '')[:100] + '...'
                     })
             else:
-                # Normal sources işleme - SourceTracker'dan gelen sources
+                # Normal sources processing - sources from SourceTracker
                 for i, source in enumerate(sources, 1):
                     if isinstance(source, dict):
                         source_details.append({
                             'rank': i,
-                            'source': source.get('clean_source', 'Bilinmeyen'),
-                            'page': source.get('page', 'Sayfa bilinmiyor'),
+                            'source': source.get('clean_source', 'Unknown'),
+                            'page': source.get('page', 'Unknown page'),
                             'content': source.get('content', '...')
                         })
             
-            # Cross-document analysis bilgilerini ekle
+            # Add cross-document analysis information
             cross_doc_analysis = result.get('cross_document_analysis', {})
             cross_doc_summary = {}
             
@@ -179,13 +179,13 @@ def search():
                 }
             })
             
-            # Session cookie ayarla
-            response.set_cookie('session_id', session_id, max_age=86400)  # 24 saat
+            # Set session cookie
+            response.set_cookie('session_id', session_id, max_age=86400)  # 24 hours
             return response
         
         else:
-            # Fallback: Demo modu
-            print("⚠️ Multi-Agent sistem kullanılamıyor, demo moda geçiliyor...")
+            # Fallback: Demo mode
+            print("⚠️ Multi-Agent system unavailable, switching to demo mode...")
             demo_result = get_demo_response(query)
             
             return jsonify({
@@ -195,12 +195,12 @@ def search():
                 'source_details': [],
                 'metadata': {
                     'detected_language': demo_result['detected_language'],
-                    'note': 'Demo modunda çalışıyor - Multi-Agent sistem bağlantısı kurulamadı'
+                    'note': 'Running in demo mode - Multi-Agent system connection could not be established'
                 }
             })
         
     except Exception as e:
-        print(f"❌ Arama hatası: {e}")
+        print(f"❌ Search error: {e}")
         return jsonify({
             'success': False,
             'error': f'Arama sırasında hata oluştu: {str(e)}',
@@ -350,7 +350,7 @@ def get_conversation_history():
                     })
                     
             except Exception as e:
-                print(f"⚠️ History alma hatası: {e}")
+                print(f"⚠️ History retrieval error: {e}")
                 return jsonify({
                     'success': True,
                     'session_id': session_id,

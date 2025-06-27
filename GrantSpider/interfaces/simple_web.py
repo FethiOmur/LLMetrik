@@ -23,15 +23,15 @@ qa_agent = None
 
 def detect_language(text: str) -> str:
     """
-    Basit dil algılama fonksiyonu
+    Simple language detection function
     
     Args:
-        text: Analiz edilecek metin
+        text: Text to analyze
         
     Returns:
-        str: 'tr' veya 'en'
+        str: 'tr' or 'en'
     """
-    # Türkçe karakterler ve kelimeler
+    # Turkish characters and words
     turkish_chars = ['ç', 'ğ', 'ı', 'ö', 'ş', 'ü', 'Ç', 'Ğ', 'İ', 'Ö', 'Ş', 'Ü']
     turkish_words = [
         'nedir', 'nasıl', 'neden', 'nerede', 'ne', 'hangi', 'kim', 'kaç', 'kadar',
@@ -43,7 +43,7 @@ def detect_language(text: str) -> str:
         'belgeleme', 'gereklilikler', 'uygunluk', 'prosedürler'
     ]
     
-    # İngilizce kelimeler
+    # English words
     english_words = [
         'what', 'how', 'why', 'where', 'when', 'which', 'who', 'how many', 'how much',
         'for', 'with', 'that', 'this', 'a', 'an', 'the', 'i', 'you', 'we', 'they',
@@ -58,65 +58,65 @@ def detect_language(text: str) -> str:
     
     text_lower = text.lower()
     
-    # Türkçe karakter kontrolü
+    # Turkish character check
     turkish_char_count = sum(1 for char in text if char in turkish_chars)
     
-    # Türkçe kelime kontrolü
+    # Turkish word check
     turkish_word_count = sum(1 for word in turkish_words if word in text_lower)
     
-    # İngilizce kelime kontrolü
+    # English word check
     english_word_count = sum(1 for word in english_words if word in text_lower)
     
-    # Karar verme
+    # Decision making
     turkish_score = turkish_char_count * 2 + turkish_word_count
     english_score = english_word_count
     
-    # Eğer Türkçe karakter varsa, büyük ihtimalle Türkçe
+    # If Turkish characters exist, likely Turkish
     if turkish_char_count > 0:
         return 'tr'
     
-    # Kelime sayısına göre karar ver
+    # Decide based on word count
     if turkish_score > english_score:
         return 'tr'
     elif english_score > turkish_score:
         return 'en'
     else:
-        # Varsayılan olarak Türkçe
+        # Default to Turkish
         return 'tr'
 
 def check_database_connection():
-    """Veritabanı bağlantısını kontrol et"""
+    """Check database connection"""
     global db_connected, db_info, qa_agent
     try:
-        # Global vector store instance'ını sıfırla
+        # Reset global vector store instance
         reset_global_vector_store()
         
         vector_store = get_vector_store()
         db_info = get_collection_info()
         db_connected = True
         
-        # QA Agent'ı başlat
+        # Initialize QA Agent
         qa_agent = QAAgent()
         
-        print(f"✅ Veritabanı bağlı: {db_info['document_count']} doküman")
-        print(f"🤖 QA Agent başlatıldı")
+        print(f"✅ Database connected: {db_info['document_count']} documents")
+        print(f"🤖 QA Agent initialized")
         return True
     except Exception as e:
-        print(f"❌ Veritabanı bağlantı hatası: {e}")
+        print(f"❌ Database connection error: {e}")
         db_connected = False
         db_info = {}
         qa_agent = None
         return False
 
 def search_with_qa_agent(query: str, max_results: int = 8):
-    """QA Agent ile akıllı arama yap"""
+    """Perform intelligent search with QA Agent"""
     try:
         if not db_connected or not qa_agent:
             return None
         
         # Dil algılama
         detected_language = detect_language(query)
-        print(f"🌐 Dil algılandı: {detected_language} - Sorgu: '{query[:50]}...'")
+        print(f"🌐 Language detected: {detected_language} - Query: '{query[:50]}...'")
         
         # Veritabanından dokümanları al
         results = search_documents(query, max_results)
@@ -141,12 +141,12 @@ def search_with_qa_agent(query: str, max_results: int = 8):
             "detected_language": detected_language
         }
         
-        print(f"🤖 QA Agent çalıştırılıyor - Dil: {detected_language}")
+        print(f"🤖 Running QA Agent - Language: {detected_language}")
         
         # QA Agent'ı çalıştır
         result_state = qa_agent.execute(state)
         
-        print(f"✅ QA Agent tamamlandı - Yanıt uzunluğu: {len(result_state.get('qa_response', ''))}")
+        print(f"✅ QA Agent completed - Response length: {len(result_state.get('qa_response', ''))}")
         
         # Kaynakları formatla
         sources = []
@@ -167,7 +167,7 @@ def search_with_qa_agent(query: str, max_results: int = 8):
         }
         
     except Exception as e:
-        print(f"❌ QA Agent hatası: {e}")
+        print(f"❌ QA Agent error: {e}")
         return None
 
 def get_demo_response(query: str):
@@ -286,7 +286,7 @@ def handle_query():
         })
         
     except Exception as e:
-        print(f"❌ Sorgu işleme hatası: {e}")
+        print(f"❌ Query processing error: {e}")
         return jsonify({
             'success': False,
             'error': f'Sorgu işlenirken hata oluştu: {str(e)}'
@@ -322,7 +322,7 @@ def get_status():
             current_db_info = get_collection_info()
             current_document_count = current_db_info.get('document_count', 0)
         except Exception as e:
-            print(f"⚠️  Status kontrolünde veritabanı bilgisi alınamadı: {e}")
+            print(f"⚠️  Could not get database info in status check: {e}")
             current_document_count = db_info.get('document_count', 0)
     
     return jsonify({
@@ -339,23 +339,23 @@ def get_status():
     })
 
 if __name__ == '__main__':
-    print(f"\n🌐 AMIF Grant Assistant Web Arayüzü başlatılıyor...")
+    print(f"\n🌐 Starting AMIF Grant Assistant Web Interface...")
     
     # Veritabanı bağlantısını kontrol et
     check_database_connection()
     
     print(f"📍 Adres: http://localhost:3000")
-    print(f"🚀 Web Arayüzü Hazır!")
-    print(f"📊 Veritabanı durumu: {'Bağlı' if db_connected else 'Demo Modu'}")
-    print(f"🤖 QA Agent durumu: {'Aktif' if qa_agent else 'Pasif'}")
-    print(f"🌐 Dil algılama: Aktif")
+    print(f"🚀 Web Interface Ready!")
+    print(f"📊 Database status: {'Connected' if db_connected else 'Demo Mode'}")
+    print(f"🤖 QA Agent status: {'Active' if qa_agent else 'Inactive'}")
+    print(f"🌐 Language detection: Active")
     
     if db_connected:
-        print(f"📄 Toplam doküman: {db_info.get('document_count', 'Bilinmiyor')}")
-        print(f"🤖 Embedding modeli: {db_info.get('embedding_model', 'N/A')}")
+        print(f"📄 Total documents: {db_info.get('document_count', 'Unknown')}")
+        print(f"🤖 Embedding model: {db_info.get('embedding_model', 'N/A')}")
     
-    print(f"⚪ Siyah-Gri-Beyaz tema aktif")
-    print(f"\nTarayıcınızda http://localhost:3000 adresini açın")
+    print(f"⚪ Black-Gray-White theme active")
+    print(f"\nOpen http://localhost:3000 in your browser")
     
     app.run(
         host='0.0.0.0',

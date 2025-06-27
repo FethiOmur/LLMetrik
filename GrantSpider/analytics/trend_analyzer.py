@@ -2,8 +2,8 @@
 Grant Trend Analyzer
 PHASE 3.1: Advanced Analytics & Insights
 
-Grant trendlerini analiz eden gelişmiş sistem.
-Zaman serisi analizi, mevsimsel trendler, başarı oranları.
+Advanced system for analyzing grant trends.
+Time series analysis, seasonal trends, success rates.
 """
 
 import pandas as pd
@@ -25,7 +25,7 @@ from plotly.subplots import make_subplots
 
 @dataclass
 class TrendData:
-    """Trend verileri için veri sınıfı"""
+    """Data class for trend data"""
     period: str
     grant_type: str
     value: float
@@ -34,7 +34,7 @@ class TrendData:
 
 @dataclass
 class TrendAnalysisResult:
-    """Trend analiz sonucu"""
+    """Trend analysis result"""
     analysis_id: str
     analysis_type: str
     period_start: datetime
@@ -47,10 +47,10 @@ class TrendAnalysisResult:
 
 class GrantTrendAnalyzer:
     """
-    Grant trend analizi için gelişmiş sistem
+    Advanced system for grant trend analysis
     
-    Bu sınıf, AMIF hibelerinin zaman içindeki trendlerini,
-    mevsimsel değişimlerini ve başarı oranlarını analiz eder.
+    This class analyzes trends, seasonal changes and success rates
+    of AMIF grants over time.
     """
     
     def __init__(self, data_path: str = "interfaces/data"):

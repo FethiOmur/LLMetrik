@@ -1,9 +1,9 @@
 """
 Bulk Document Processing Module
 
-Bu modül GrantSpider için toplu doküman işleme yetenekleri sağlar.
-Büyük miktarlarda PDF dosyasını paralel olarak işleyebilir,
-ilerleme takibi yapar ve hata yönetimi sağlar.
+This module provides bulk document processing capabilities for GrantSpider.
+It can process large numbers of PDF files in parallel,
+tracks progress and provides error management.
 """
 
 import os
@@ -28,7 +28,7 @@ try:
     from analytics.metrics_engine import PerformanceMetricsEngine
 except ImportError as e:
     print(f"Warning: Could not import GrantSpider modules: {e}")
-    # Fallback sınıflar
+    # Fallback classes
     class PDFProcessor:
         async def load_and_process_pdf(self, file_path):
             return [f"Mock document from {file_path}"]
@@ -47,7 +47,7 @@ except ImportError as e:
 
 
 class ProcessingStatus(Enum):
-    """Doküman işleme durumları"""
+    """Document processing statuses"""
     PENDING = "pending"
     PROCESSING = "processing"
     COMPLETED = "completed"
@@ -57,22 +57,22 @@ class ProcessingStatus(Enum):
 
 
 class ProcessingMode(Enum):
-    """İşleme modları"""
-    SEQUENTIAL = "sequential"  # Sıralı işleme
-    PARALLEL_THREADS = "parallel_threads"  # Thread bazlı paralel
-    PARALLEL_PROCESSES = "parallel_processes"  # Process bazlı paralel
-    ADAPTIVE = "adaptive"  # Otomatik en iyi mod seçimi
+    """Processing modes"""
+    SEQUENTIAL = "sequential"  # Sequential processing
+    PARALLEL_THREADS = "parallel_threads"  # Thread-based parallel
+    PARALLEL_PROCESSES = "parallel_processes"  # Process-based parallel
+    ADAPTIVE = "adaptive"  # Automatic best mode selection
 
 
 @dataclass
 class ProcessingConfig:
-    """Toplu işleme konfigürasyonu"""
+    """Bulk processing configuration"""
     max_workers: int = 4
     processing_mode: ProcessingMode = ProcessingMode.ADAPTIVE
     chunk_size: int = 10
     retry_attempts: int = 3
     retry_delay: float = 2.0
-    timeout_per_document: int = 300  # 5 dakika
+    timeout_per_document: int = 300  # 5 minutes
     memory_limit_mb: int = 1024
     enable_progress_tracking: bool = True
     save_intermediate_results: bool = True
@@ -82,7 +82,7 @@ class ProcessingConfig:
 
 @dataclass
 class ProcessingJob:
-    """Tek bir doküman işleme işi"""
+    """Single document processing job"""
     job_id: str
     file_path: str
     status: ProcessingStatus = ProcessingStatus.PENDING
@@ -99,7 +99,7 @@ class ProcessingJob:
 
 @dataclass
 class ProcessingResult:
-    """Toplu işleme sonuç raporu"""
+    """Bulk processing result report"""
     batch_id: str
     total_files: int
     successful_files: int
@@ -117,18 +117,18 @@ class ProcessingResult:
 
 class BulkDocumentProcessor:
     """
-    Toplu doküman işleme sistemi
+    Bulk document processing system
     
-    Bu sınıf büyük miktarlarda PDF dosyasını paralel olarak işleyebilir,
-    ilerleme takibi yapar ve kapsamlı hata yönetimi sağlar.
+    This class can process large amounts of PDF files in parallel,
+    tracks progress and provides comprehensive error management.
     """
     
     def __init__(self, config: Optional[ProcessingConfig] = None):
         """
-        Bulk processor başlatma
+        Initialize bulk processor
         
         Args:
-            config: İşleme konfigürasyonu
+            config: Processing configuration
         """
         self.config = config or ProcessingConfig()
         self.logger = logging.getLogger(__name__)

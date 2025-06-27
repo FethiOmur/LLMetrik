@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-AMIF Grant Assistant - Hızlı Başlatma Scripti
+AMIF Grant Assistant - Quick Start Script
 """
 
 import os
@@ -8,23 +8,23 @@ import sys
 import subprocess
 from pathlib import Path
 
-# Proje kök dizinini Python path'ine ekle
+# Add project root directory to Python path
 project_root = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, project_root)
 
 def print_banner():
-    """Başlık banner'ını yazdırır"""
+    """Prints the title banner"""
     print("""
 ╔══════════════════════════════════════════════════════════════╗
 ║                    🚀 AMIF Grant Assistant                   ║
 ║              AI-Powered Grant Document Q&A System           ║
-║                     Hızlı Başlatma Scripti                  ║
+║                       Quick Start Script                    ║
 ╚══════════════════════════════════════════════════════════════╝
     """)
 
 def get_correct_python_executable():
-    """Doğru Python executable'ını tespit eder"""
-    # Önce which python3 komutunu dene
+    """Detects the correct Python executable"""
+    # First try the which python3 command
     try:
         result = subprocess.run(["which", "python3"], capture_output=True, text=True)
         if result.returncode == 0:
@@ -32,7 +32,7 @@ def get_correct_python_executable():
     except:
         pass
     
-    # Alternatif yolları dene
+    # Try alternative paths
     possible_paths = [
         "/usr/bin/python3",
         "/opt/homebrew/bin/python3.11", 
@@ -44,93 +44,93 @@ def get_correct_python_executable():
         if os.path.exists(path):
             return path
     
-    return sys.executable  # Son çare
+    return sys.executable  # Last resort
 
 def check_prerequisites():
-    """Ön koşulları kontrol eder"""
-    print("🔍 Ön koşullar kontrol ediliyor...")
+    """Checks prerequisites"""
+    print("🔍 Checking prerequisites...")
     
     issues = []
     
-    # .env dosyası kontrolü
+    # .env file check
     env_file = Path(".env")
     if not env_file.exists():
-        issues.append("❌ .env dosyası bulunamadı")
-        print("💡 .env dosyası oluşturuluyor...")
+        issues.append("❌ .env file not found")
+        print("💡 Creating .env file...")
         create_env_template()
     else:
-        print("✅ .env dosyası mevcut")
+        print("✅ .env file exists")
     
-    # Doğru Python executable'ını tespit et
+    # Detect correct Python executable
     python_exec = get_correct_python_executable()
     
-    # Dependencies kontrolü - doğru Python kullan
+    # Dependencies check - use correct Python
     try:
-        # Streamlit kontrolü
+        # Streamlit check
         result = subprocess.run([python_exec, "-c", "import streamlit"], 
                               capture_output=True, text=True)
         if result.returncode == 0:
-            print("✅ Streamlit yüklü")
+            print("✅ Streamlit installed")
         else:
-            issues.append("❌ Streamlit yüklü değil")
+            issues.append("❌ Streamlit not installed")
     except Exception:
-        issues.append("❌ Streamlit kontrolü başarısız")
+        issues.append("❌ Streamlit check failed")
     
     try:
-        # LangChain kontrolü
+        # LangChain check
         result = subprocess.run([python_exec, "-c", "import langchain"], 
                               capture_output=True, text=True)
         if result.returncode == 0:
-            print("✅ LangChain yüklü")
+            print("✅ LangChain installed")
         else:
-            issues.append("❌ LangChain yüklü değil")
+            issues.append("❌ LangChain not installed")
     except Exception:
-        issues.append("❌ LangChain kontrolü başarısız")
+        issues.append("❌ LangChain check failed")
     
     try:
-        # ChromaDB kontrolü
+        # ChromaDB check
         result = subprocess.run([python_exec, "-c", "import chromadb"], 
                               capture_output=True, text=True)
         if result.returncode == 0:
-            print("✅ ChromaDB yüklü")
+            print("✅ ChromaDB installed")
         else:
-            issues.append("❌ ChromaDB yüklü değil")
+            issues.append("❌ ChromaDB not installed")
     except Exception:
-        issues.append("❌ ChromaDB kontrolü başarısız")
+        issues.append("❌ ChromaDB check failed")
     
     try:
-        # OpenAI kontrolü
+        # OpenAI check
         result = subprocess.run([python_exec, "-c", "import openai"], 
                               capture_output=True, text=True)
         if result.returncode == 0:
-            print("✅ OpenAI yüklü")
+            print("✅ OpenAI installed")
         else:
-            issues.append("❌ OpenAI yüklü değil")
+            issues.append("❌ OpenAI not installed")
     except Exception:
-        issues.append("❌ OpenAI kontrolü başarısız")
+        issues.append("❌ OpenAI check failed")
     
-    # Veritabanı kontrolü
+    # Database check
     db_path = Path("data/db")
     if db_path.exists() and any(db_path.iterdir()):
-        print("✅ Vektör veritabanı mevcut")
+        print("✅ Vector database exists")
     else:
-        issues.append("⚠️  Vektör veritabanı boş veya mevcut değil")
+        issues.append("⚠️  Vector database empty or missing")
     
-    # PDF dosyaları kontrolü
+    # PDF files check
     pdf_path = Path("data/raw")
     if pdf_path.exists():
         pdf_count = len(list(pdf_path.glob("*.pdf")))
         if pdf_count > 0:
-            print(f"✅ {pdf_count} PDF dosyası bulundu")
+            print(f"✅ {pdf_count} PDF files found")
         else:
-            issues.append("⚠️  PDF dosyası bulunamadı")
+            issues.append("⚠️  No PDF files found")
     else:
-        issues.append("❌ data/raw dizini bulunamadı")
+        issues.append("❌ data/raw directory not found")
     
     return issues
 
 def create_env_template():
-    """Örnek .env dosyası oluşturur"""
+    """Creates a sample .env file"""
     env_template = """# AMIF Grant Assistant - Environment Variables
 
 # OpenAI API Configuration
@@ -157,97 +157,97 @@ LOG_LEVEL=INFO
     with open(".env", "w", encoding="utf-8") as f:
         f.write(env_template)
     
-    print("📝 .env dosyası oluşturuldu. Lütfen API anahtarlarınızı ekleyin!")
+    print("📝 .env file created. Please add your API keys!")
 
 def show_quick_start_menu():
-    """Hızlı başlatma menüsünü gösterir"""
-    print("\n🚀 HIZLI BAŞLATMA MENÜSÜ")
+    """Shows the quick start menu"""
+    print("\n🚀 QUICK START MENU")
     print("=" * 50)
-    print("1. 🌐 Streamlit Web Arayüzü (Önerilen)")
-    print("2. 💻 Gelişmiş CLI Arayüzü")
-    print("3. 🔧 Basit CLI Arayüzü")
-    print("4. 📂 PDF Yükleme (Ingestion)")
-    print("5. 📊 Sistem Durumu")
-    print("6. ❓ Yardım")
-    print("7. 🚪 Çıkış")
+    print("1. 🌐 Streamlit Web Interface (Recommended)")
+    print("2. 💻 Advanced CLI Interface")
+    print("3. 🔧 Simple CLI Interface")
+    print("4. 📂 PDF Upload (Ingestion)")
+    print("5. 📊 System Status")
+    print("6. ❓ Help")
+    print("7. 🚪 Exit")
     print("=" * 50)
 
 def handle_user_choice(choice: str):
-    """Kullanıcı seçimini işler"""
+    """Handles user choice"""
     if choice == '1':
-        print("🌐 Streamlit başlatılıyor...")
+        print("🌐 Starting Streamlit...")
         os.system("python main.py --streamlit")
     
     elif choice == '2':
-        print("💻 Gelişmiş CLI başlatılıyor...")
+        print("💻 Starting Advanced CLI...")
         os.system("python main.py --cli")
     
     elif choice == '3':
-        print("🔧 Basit CLI başlatılıyor...")
+        print("🔧 Starting Simple CLI...")
         os.system("python main.py --simple")
     
     elif choice == '4':
-        print("📂 PDF yükleme başlatılıyor...")
+        print("📂 Starting PDF upload...")
         os.system("python main.py --ingest")
     
     elif choice == '5':
-        print("📊 Sistem durumu kontrol ediliyor...")
+        print("📊 Checking system status...")
         os.system("python main.py --status")
     
     elif choice == '6':
         show_help()
     
     elif choice == '7':
-        print("👋 Görüşürüz!")
+        print("👋 Goodbye!")
         sys.exit(0)
     
     else:
-        print("❌ Geçersiz seçim! Lütfen 1-7 arası bir sayı girin.")
+        print("❌ Invalid selection! Please enter a number between 1-7.")
 
 def show_help():
-    """Yardım bilgilerini gösterir"""
-    print("\n📚 YARDIM BİLGİLERİ")
+    """Shows help information"""
+    print("\n📚 HELP INFORMATION")
     print("=" * 60)
-    print("🌐 Streamlit Web Arayüzü:")
-    print("   • En kullanıcı dostu arayüz")
-    print("   • Web tarayıcısında çalışır")
-    print("   • Sürükle-bırak dosya yükleme")
-    print("   • Görsel sonuç gösterimi")
+    print("🌐 Streamlit Web Interface:")
+    print("   • Most user-friendly interface")
+    print("   • Works in web browser")
+    print("   • Drag-and-drop file upload")
+    print("   • Visual result display")
     print()
-    print("💻 Gelişmiş CLI Arayüzü:")
-    print("   • Terminal tabanlı")
-    print("   • Detaylı kaynak bilgileri")
-    print("   • Gelişmiş komutlar")
-    print("   • LangGraph tabanlı")
+    print("💻 Advanced CLI Interface:")
+    print("   • Terminal-based")
+    print("   • Detailed source information")
+    print("   • Advanced commands")
+    print("   • LangGraph-based")
     print()
-    print("🔧 Basit CLI Arayüzü:")
-    print("   • Hızlı test için")
-    print("   • Minimal arayüz")
-    print("   • Temel soru-cevap")
+    print("🔧 Simple CLI Interface:")
+    print("   • For quick testing")
+    print("   • Minimal interface")
+    print("   • Basic Q&A")
     print()
-    print("📂 PDF Yükleme:")
-    print("   • Yeni PDF dosyalarını sisteme ekler")
-    print("   • data/raw klasöründeki PDF'leri işler")
-    print("   • Vektör veritabanını günceller")
+    print("📂 PDF Upload:")
+    print("   • Adds new PDF files to the system")
+    print("   • Processes PDFs from data/raw folder")
+    print("   • Updates vector database")
     print("=" * 60)
 
 def run_diagnostic():
-    """Detaylı sistem diagnostiği çalıştırır"""
-    print("\n🔍 DETAYLI SİSTEM DİAGNOSTİĞİ")
+    """Runs detailed system diagnostics"""
+    print("\n🔍 DETAILED SYSTEM DIAGNOSTICS")
     print("=" * 60)
     
-    # Doğru Python executable'ını tespit et
+    # Detect correct Python executable
     python_exec = get_correct_python_executable()
     
-    # Python bilgileri
+    # Python information
     print(f"🐍 Python: {sys.version}")
     print(f"📁 Python executable: {python_exec}")
-    print(f"📂 Çalışma dizini: {os.getcwd()}")
+    print(f"📂 Working directory: {os.getcwd()}")
     
-    print("\n📦 YÜKLÜ PAKETLER:")
+    print("\n📦 INSTALLED PACKAGES:")
     print("-" * 30)
     
-    # Kritik paketleri kontrol et
+    # Check critical packages
     critical_packages = [
         "streamlit", "langchain", "chromadb", "openai", 
         "langchain-openai", "langchain-chroma", "python-dotenv"
@@ -255,7 +255,7 @@ def run_diagnostic():
     
     for package in critical_packages:
         try:
-            result = subprocess.run([python_exec, "-c", f"import {package}; print(f'{package}: YÜKLÜ')"], 
+            result = subprocess.run([python_exec, "-c", f"import {package}; print(f'{package}: INSTALLED')"], 
                                   capture_output=True, text=True, timeout=5)
             if result.returncode == 0:
                 print(f"✅ {package}")
@@ -264,10 +264,10 @@ def run_diagnostic():
         except Exception as e:
             print(f"❌ {package}: {str(e)}")
     
-    print("\n📁 PROJE YAPISINI KONTROL ET:")
+    print("\n📁 CHECK PROJECT STRUCTURE:")
     print("-" * 30)
     
-    # Kritik dizinleri kontrol et
+    # Check critical directories
     critical_dirs = [
         "agents", "config", "graph", "ingestion", "interfaces", 
         "memory", "chains", "utils", "data", "data/db", "data/raw"
@@ -277,16 +277,16 @@ def run_diagnostic():
         if os.path.exists(dir_name):
             if dir_name == "data/db":
                 files = os.listdir(dir_name) if os.path.isdir(dir_name) else []
-                print(f"✅ {dir_name}/ ({len(files)} dosya)")
+                print(f"✅ {dir_name}/ ({len(files)} files)")
             elif dir_name == "data/raw":
                 pdf_files = [f for f in os.listdir(dir_name) if f.endswith('.pdf')] if os.path.isdir(dir_name) else []
-                print(f"✅ {dir_name}/ ({len(pdf_files)} PDF)")
+                print(f"✅ {dir_name}/ ({len(pdf_files)} PDFs)")
             else:
                 print(f"✅ {dir_name}/")
         else:
-            print(f"❌ {dir_name}/ eksik")
+            print(f"❌ {dir_name}/ missing")
     
-    print("\n🔧 KRITIK DOSYALAR:")
+    print("\n🔧 CRITICAL FILES:")
     print("-" * 30)
     
     critical_files = [
@@ -299,9 +299,9 @@ def run_diagnostic():
             size = os.path.getsize(file_name)
             print(f"✅ {file_name} ({size} bytes)")
         else:
-            print(f"❌ {file_name} eksik")
+            print(f"❌ {file_name} missing")
     
-    # Environment variables kontrolü
+    # Environment variables check
     print("\n🔐 ENVIRONMENT VARIABLES:")
     print("-" * 30)
     
@@ -310,78 +310,78 @@ def run_diagnostic():
             with open(".env", "r") as f:
                 env_content = f.read()
                 if "OPENAI_API_KEY=your_openai_api_key_here" in env_content:
-                    print("⚠️  OpenAI API key henüz ayarlanmamış")
+                    print("⚠️  OpenAI API key not configured yet")
                 elif "OPENAI_API_KEY=" in env_content:
-                    print("✅ OpenAI API key ayarlanmış görünüyor")
+                    print("✅ OpenAI API key appears to be configured")
                 else:
-                    print("❌ .env dosyasında API key bulunamadı")
+                    print("❌ API key not found in .env file")
         except Exception as e:
-            print(f"❌ .env dosyası okunamadı: {e}")
+            print(f"❌ .env file couldn't be read: {e}")
     
-    print("\n💾 VERİTABANI DURUMU:")
+    print("\n💾 DATABASE STATUS:")
     print("-" * 30)
     
     db_path = Path("data/db")
     if db_path.exists():
         try:
-            # ChromaDB dosyalarını kontrol et
+            # Check ChromaDB files
             chroma_file = db_path / "chroma.sqlite3"
             if chroma_file.exists():
                 size_mb = chroma_file.stat().st_size / (1024*1024)
                 print(f"✅ ChromaDB: {size_mb:.1f}MB")
             else:
-                print("❌ ChromaDB dosyası bulunamadı")
+                print("❌ ChromaDB file not found")
             
-            # Collection dizinlerini say
+            # Count collection directories
             collections = [d for d in db_path.iterdir() if d.is_dir()]
-            print(f"📁 Collection sayısı: {len(collections)}")
+            print(f"📁 Collection count: {len(collections)}")
             
         except Exception as e:
-            print(f"❌ Veritabanı kontrolü başarısız: {e}")
+            print(f"❌ Database check failed: {e}")
     else:
-        print("❌ Veritabanı dizini bulunamadı")
+        print("❌ Database directory not found")
     
     print("=" * 60)
 
 def launch_streamlit():
-    """Streamlit uygulamasını başlatır"""
-    print("\n🌐 Streamlit uygulaması başlatılıyor...")
+    """Starts the Streamlit application"""
+    print("\n🌐 Starting Streamlit application...")
     try:
         os.system(f"{sys.executable} -m streamlit run streamlit_app.py")
     except Exception as e:
-        print(f"❌ Streamlit başlatılamadı: {e}")
+        print(f"❌ Streamlit could not be started: {e}")
 
 def launch_flask_app():
-    """Flask web uygulamasını başlatır"""
-    print("\n🌐 Flask web uygulaması başlatılıyor...")
-    print("📍 Adres: http://localhost:3000")
-    print("🎨 Modern web arayüzü yükleniyor...")
+    """Starts the Flask web application"""
+    print("\n🌐 Starting Flask web application...")
+    print("📍 Address: http://localhost:3000")
+    print("🎨 Loading modern web interface...")
     try:
-        # interfaces dizinine geç ve web_app.py'yi çalıştır
+        # Go to interfaces directory and run web_app.py
         os.chdir("interfaces")
         import subprocess
         subprocess.run([sys.executable, "web_app.py"])
     except Exception as e:
-        print(f"❌ Flask uygulaması başlatılamadı: {e}")
-        print("💡 Alternatif çözüm denenecek...")
+        print(f"❌ Flask application could not be started: {e}")
+        print("💡 Trying alternative solution...")
         try:
             os.system(f"{sys.executable} web_app.py")
         except Exception as e2:
-            print(f"❌ Alternatif çözüm de başarısız: {e2}")
+            print(f"❌ Alternative solution also failed: {e2}")
         finally:
-            # Ana dizine geri dön
+            # Return to main directory
             os.chdir("..")
 
 def show_system_status():
-    """Sistem durumunu gösterir"""
-    print("\n📊 SİSTEM DURUMU")
+    """Shows system status"""
+    print("\n📊 SYSTEM STATUS")
     print("=" * 30)
     
-    # Doğru Python executable'ını tespit et
+    # Detect correct Python executable
     python_exec = get_correct_python_executable()
     
-    # Hızlı kontroller
-    print("🔧 Temel Kontroller:")
+    # Quick checks
+    print("🔧 Basic Checks:")
     
     # Python version
     print(f"🐍 Python: {sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}")
@@ -403,41 +403,41 @@ def show_system_status():
     
     # Database
     if Path("data/db").exists() and any(Path("data/db").iterdir()):
-        print("✅ Veritabanı")
+        print("✅ Database")
     else:
-        print("❌ Veritabanı")
+        print("❌ Database")
     
     # PDFs
     pdf_count = len(list(Path("data/raw").glob("*.pdf"))) if Path("data/raw").exists() else 0
-    print(f"📄 PDF Dosyaları: {pdf_count}")
+    print(f"📄 PDF Files: {pdf_count}")
     
     # Overall status
     if deps_ok and Path("data/db").exists() and pdf_count > 0:
-        print("\n🎉 Sistem hazır! Tüm bileşenler çalışıyor.")
+        print("\n🎉 System ready! All components working.")
     else:
-        print("\n⚠️  Bazı sorunlar var. Detaylı analiz için '4' seçeneğini kullanın.")
+        print("\n⚠️  Some issues detected. Use option '4' for detailed analysis.")
 
 def main():
-    """Ana fonksiyon - Direkt Flask web uygulamasını başlatır"""
+    """Main function - Directly starts Flask web application"""
     print_banner()
     
-    # Ön koşulları kontrol et
+    # Check prerequisites
     issues = check_prerequisites()
     
     if issues:
-        print("\n⚠️  Tespit edilen durumlar:")
+        print("\n⚠️  Detected issues:")
         for issue in issues:
             print(f"  {issue}")
         
-        # Kritik hatalar varsa durdur
+        # Stop if there are critical errors
         if any("❌" in issue for issue in issues):
-            print("\n❌ Kritik hatalar mevcut. Lütfen problemleri çözün ve tekrar deneyin.")
-            print("💡 Yardım almak için: python install.sh")
+            print("\n❌ Critical errors exist. Please resolve issues and try again.")
+            print("💡 For help: python install.sh")
             return
     
-    print(f"\n✅ Sistem hazır! Web uygulaması başlatılıyor...")
+    print(f"\n✅ System ready! Starting web application...")
     
-    # Direkt Flask web uygulamasını başlat
+    # Start Flask web application directly
     launch_flask_app()
 
 if __name__ == "__main__":
